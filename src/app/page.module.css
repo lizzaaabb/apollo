@@ -1,14 +1,11 @@
 .page {
-  --background: #fafafa;
-  --foreground: #fff;
-
-  --text-primary: #000;
-  --text-secondary: #666;
-
-  --button-primary-hover: #383838;
-  --button-secondary-hover: #f2f2f2;
-  --button-secondary-border: #ebebeb;
-
+  --background: #0d0820;
+  --foreground: rgba(255, 255, 255, 0.04);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.45);
+  --button-primary-hover: #a855f7;
+  --button-secondary-hover: rgba(192, 132, 252, 0.08);
+  --button-secondary-border: rgba(192, 132, 252, 0.25);
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -58,7 +55,7 @@
 
 .intro a {
   font-weight: 500;
-  color: var(--text-primary);
+  color: #c084fc;
 }
 
 .ctas {
@@ -85,25 +82,26 @@
 }
 
 a.primary {
-  background: var(--text-primary);
-  color: var(--background);
+  background: #c084fc;
+  color: #0d0820;
   gap: 8px;
 }
 
 a.secondary {
-  border-color: var(--button-secondary-border);
+  border-color: rgba(192, 132, 252, 0.25);
+  color: rgba(255, 255, 255, 0.75);
 }
 
-/* Enable hover only on non-touch devices */
 @media (hover: hover) and (pointer: fine) {
   a.primary:hover {
-    background: var(--button-primary-hover);
+    background: #a855f7;
     border-color: transparent;
   }
 
   a.secondary:hover {
-    background: var(--button-secondary-hover);
-    border-color: transparent;
+    background: rgba(192, 132, 252, 0.08);
+    border-color: rgba(192, 132, 252, 0.5);
+    color: #fff;
   }
 }
 
@@ -123,20 +121,15 @@ a.secondary {
   }
 }
 
+/* Dark mode stays consistent with the purple theme */
 @media (prefers-color-scheme: dark) {
-  .logo {
-    filter: invert();
-  }
-
   .page {
-    --background: #000;
-    --foreground: #000;
-
-    --text-primary: #ededed;
-    --text-secondary: #999;
-
-    --button-primary-hover: #ccc;
-    --button-secondary-hover: #1a1a1a;
-    --button-secondary-border: #1a1a1a;
+    --background: #0d0820;
+    --foreground: rgba(255, 255, 255, 0.03);
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.45);
+    --button-primary-hover: #a855f7;
+    --button-secondary-hover: rgba(192, 132, 252, 0.08);
+    --button-secondary-border: rgba(192, 132, 252, 0.25);
   }
 }
