@@ -187,12 +187,13 @@
 }
 
 /* ── Mobile ── */
+/* ── Mobile ── */
 @media (max-width: 540px) {
   .main-container {
     flex-direction: column;
     align-items: flex-start;
-    justify-content: center;
-    padding: 60px 16px 40px 16px;
+    justify-content: flex-end;      /* ← pushes content to bottom */
+    padding: 0px 16px 140px 16px;     /* ← tune this number to taste */
     gap: 28px;
   }
 
@@ -204,21 +205,5 @@
   .right-btn-2 {
     font-size: 1rem;
     padding: 9px 18px;
-  }
-}
-
-/* ── Small mobile ── */
-@media (max-width: 380px) {
-  .header { font-size: 1.5rem; }
-
-  .right-btn-container {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .right-btn-1,
-  .right-btn-2 {
-    width: 100%;
-    justify-content: center;
   }
 }
