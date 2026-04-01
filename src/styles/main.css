@@ -117,7 +117,7 @@
   border: none;
   cursor: pointer;
   background: #c084fc;
-  color: #0d0820;
+  color: #282828;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
