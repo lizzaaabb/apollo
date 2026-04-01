@@ -193,7 +193,7 @@
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-end;      /* ← pushes content to bottom */
-    padding: 0px 16px 140px 16px;     /* ← tune this number to taste */
+    padding: 0px 16px 90px 16px;     /* ← tune this number to taste */
     gap: 28px;
   }
 
