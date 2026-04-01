@@ -1,0 +1,204 @@
+.services-container {
+  width: 88%;
+  height: 90vh;
+  padding: 40px 50px;        /* ← reduced from 70px */
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;                 /* ← reduced from 50px */
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 28px;
+  border: 1px solid rgba(192, 132, 252, 0.18);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(192, 132, 252, 0.08);
+}
+
+.service-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 500px;
+  flex-shrink: 0;            /* ← never compress the header */
+}
+
+.service-h2 {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  margin: 0;
+  line-height: 1.05;
+}
+
+.service-description {
+  font-family: 'Afacad', sans-serif;
+  font-size: 1.15rem;
+  color: rgba(255, 255, 255, 0.742);
+  line-height: 1.5;
+}
+
+/* ── 2x2 grid — fills remaining height ── */
+.service-wrapper {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);  /* ← equal rows */
+  gap: 14px;
+  width: 100%;
+  flex: 1;                             /* ← takes all leftover height */
+  min-height: 0;                       /* ← lets flex child shrink properly */
+}
+
+.service-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;            /* ← vertically center content in card */
+  gap: 12px;
+  padding: 24px 28px;                 /* ← reduced from 40px */
+  border: 1px solid rgba(192, 132, 252, 0.15);
+  border-radius: 20px;
+  background: rgba(192, 132, 252, 0.06);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  transition:
+    border-color 0.3s ease,
+    background 0.3s ease,
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+  cursor: pointer;
+  text-align: center;
+  min-height: 0;                      /* ← lets grid rows shrink properly */
+  overflow: hidden;
+}
+
+.service-card:hover {
+  border-color: rgba(192, 132, 252, 0.5);
+  background: rgba(192, 132, 252, 0.12);
+  transform: translateY(-4px);
+  box-shadow:
+    0 20px 50px rgba(192, 132, 252, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+
+
+.service-card:hover::before {
+  background: rgba(192, 132, 252, 0.25);
+  border-color: rgba(192, 132, 252, 0.6);
+}
+
+.service-card-header {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #dda8ff;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.service-card-description {
+  font-family: 'Afacad', sans-serif;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.6;
+  margin: 0;
+  max-width: 300px;
+}
+
+/* ── Tablet ── */
+@media (max-width: 768px) {
+  .services-container {
+    width: 92%;
+    height: auto;              /* ← let it grow naturally on tablet */
+    min-height: 90vh;
+    padding: 40px 24px;
+    gap: 24px;
+  }
+
+  .service-h2 {
+    font-size: 2rem;
+  }
+
+  .service-wrapper {
+    grid-template-rows: auto;
+    gap: 12px;
+  }
+
+  .service-card {
+    padding: 24px 18px;
+  }
+
+  .service-card-description {
+    font-size: 0.95rem;
+  }
+}
+
+/* ── Mobile ── */
+@media (max-width: 500px) {
+  .services-container {
+    width: 95%;
+    padding: 32px 16px;
+    gap: 20px;
+    border-radius: 20px;
+  }
+
+  .service-h2 {
+    font-size: 1.6rem;
+  }
+
+  .service-wrapper {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  .service-card {
+    padding: 24px 18px;
+  }
+}
+
+
+.service-icon{
+    height: 30px;
+}
+
+
+/* ── add these instead ── */
+.service-icon-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(192, 132, 252, 0.1);
+  border: 1px solid rgba(192, 132, 252, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.3s ease, border-color 0.3s ease;
+  overflow: hidden;
+}
+
+.service-card:hover .service-icon-wrap {
+  background: rgba(192, 132, 252, 0.2);
+  border-color: rgba(192, 132, 252, 0.65);
+}
+
+.service-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
