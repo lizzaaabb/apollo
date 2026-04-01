@@ -1,0 +1,50 @@
+/* ─────────────────────────────────────────────
+   Sphere color palette — tweak these to retheme
+   the entire sphere without touching the shader
+───────────────────────────────────────────────*/
+:root {
+  /* Inner liquid colors — dark → bright → flare */
+ --sph-deep:     #050112;   /* near-black, almost void    */
+--sph-mid:      #0d0435;   /* very dark navy-indigo      */
+--sph-bright:   #2a0d8f;   /* deep electric indigo       */
+--sph-lavender: #5a1fd4;   /* rich violet                */
+--sph-flare:    #7b35ff;   /* bright violet              */
+--sph-frost:    #c9a8ff;   /* pale lavender frost peak   */
+--sph-rim-a:    #1a00aa;   /* deep indigo rim            */
+--sph-rim-b:    #8f5fff;   /* violet rim                 */  /* soft violet-lilac rim      */
+}
+
+/* ── Page background ── */
+.three-bg-gradient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+
+  /* Rich dark — much darker than the sphere so it pops */
+  background:
+    radial-gradient(ellipse at 55% 35%, #3b1470 0%, #200a50 35%, #0e0428 65%, #060115 100%);
+}
+
+/* ── WebGL canvas mount ── */
+.three-bg-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─────────────────────────────────────────────
+   Post-processing filter on the canvas element
+   — gives the sphere that "liquid glass" depth
+   without any extra render passes
+───────────────────────────────────────────────*/
+.three-bg-canvas canvas {
+  filter:
+    saturate(1.35)
+    contrast(1.12)
+    brightness(1.05);
+}

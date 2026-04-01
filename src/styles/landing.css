@@ -1,0 +1,30 @@
+@import url('https://fonts.cdnfonts.com/css/unbounded');
+@import url('https://fonts.cdnfonts.com/css/afacad');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.landing-container {
+  /* transparent so ThreeBackground shows through */
+  background-color: transparent;
+  min-height: 800vh;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+
+  /* sits above the Three.js canvas */
+  position: relative;
+  z-index: 10;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-direction: column;
+}
+
