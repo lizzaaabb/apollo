@@ -1,0 +1,194 @@
+.clients-container {
+  height: 70vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 90px;
+}
+
+.clients-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.clients-h2 {
+  font-family: 'Afacad', sans-serif;
+  text-transform: uppercase;
+  font-size: 1.2rem;
+  font-weight: 500;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
+
+.clients-description {
+  font-family: 'Unbounded', sans-serif;
+  text-transform: capitalize;
+  font-size: 2rem;
+  width: 600px;
+  text-align: center;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.2;
+}
+
+/* ── Marquee ── */
+.marquee-wrapper {
+  width: 100%;
+  overflow: hidden;
+  padding-top: 12px;        /* ← gives hover lift room */
+  margin-top: -12px;        /* ← compensates so layout doesn't shift */
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 10%,
+    black 90%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 10%,
+    black 90%,
+    transparent 100%
+  );
+}
+
+.marquee-track {
+  display: flex;
+  gap: 16px;
+  width: max-content;
+  animation: marquee 30s linear infinite;
+  background: transparent;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ── Brand card ── */
+/* ── Brand card ── */
+.brand-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  height: 180px;
+  width: 150px;
+  padding: 20px 16px;
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  text-align: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  border: 1px solid rgba(192, 132, 252, 0.15);
+  transition: background 0.4s ease, border-color 0.4s ease, transform 0.3s ease, box-shadow 0.4s ease;
+}
+
+/* shimmer layer — hidden by default */
+.brand-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    105deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.18) 50%,
+    transparent 80%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+/* top-edge glass highlight — hidden by default */
+.brand-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.18) 0%,
+    transparent 55%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.brand-card:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(192, 132, 252, 0.15) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(192, 132, 252, 0.1) 100%
+  );
+  border-color: rgba(192, 132, 252, 0.5);
+  transform: translateY(-4px);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.25),
+    0 0 18px rgba(192, 132, 252, 0.15),
+    0 1px 0 rgba(255, 255, 255, 0.15) inset;
+}
+
+/* fade in both glass layers on hover */
+.brand-card:hover::before {
+  opacity: 1;
+}
+
+.brand-card:hover::after {
+  opacity: 1;
+  left: 130%;
+  transition: left 0.6s ease, opacity 0.3s ease;
+}
+
+.brand-name {
+  font-family: 'Unbounded', sans-serif;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.4;
+}
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .clients-container {
+    height: auto;
+    padding: 60px 0;
+    gap: 50px;
+  }
+
+  .clients-description {
+    font-size: 1.4rem;
+    width: 90%;
+  }
+
+  .brand-card {
+    height: 140px;
+    width: 120px;
+  }
+
+  .brand-name {
+    font-size: 0.65rem;
+  }
+}

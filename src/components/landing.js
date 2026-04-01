@@ -4,6 +4,7 @@ import '../styles/landing.css'
 import ThreeBackground from './three'
 import Main from '../components/main'
 import Services from '../components/services'
+import Clients from '../components/clients'
 
 function Landing() {
   return (
@@ -13,6 +14,7 @@ function Landing() {
       <div className='landing-container'>
         <Main/>
         <Services />
+        <Clients />
       </div>
     </>
   )
