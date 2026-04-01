@@ -13,6 +13,8 @@ function Main() {
     const hero = heroRef.current
     if (!hero) return
 
+    const isMobile = window.innerWidth <= 768
+
     const handleScroll = () => {
       const scrollY = window.scrollY
       const fadeStart = 80
@@ -24,8 +26,11 @@ function Main() {
         : 1 - Math.pow(-2 * progress + 2, 2) / 2
 
       hero.style.opacity = 1 - eased
-      hero.style.filter = `blur(${eased * 8}px)`
       hero.style.transform = `translateY(${eased * -40}px) scale(${1 - eased * 0.04})`
+
+      if (!isMobile) {
+        hero.style.filter = `blur(${eased * 8}px)`
+      }
     }
 
     window.addEventListener('scroll', handleScroll, { passive: true })
@@ -115,7 +120,14 @@ function Main() {
 
   return (
     <>
-      <div ref={heroRef} style={{ willChange: 'opacity, transform, filter', transition: 'opacity 0.05s linear' }}>
+      <div
+        ref={heroRef}
+        style={{
+          willChange: 'opacity, transform',
+          transform: 'translateZ(0)',
+          transition: 'none',
+        }}
+      >
         <div className='main-container'>
           <canvas ref={canvasRef} className="ripple-canvas" />
           <div className="left-container">
