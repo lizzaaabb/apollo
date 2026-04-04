@@ -107,16 +107,32 @@ export default function Projects() {
   const [visible, setVisible] = useState(0)
   const [fading,  setFading]  = useState(false)
 
-  const sectionRef  = useRef(null)
-  const activeRef   = useRef(0)
-  const fadingRef   = useRef(false)
-  const wheelAccum  = useRef(0)
-  const lastWheelTs = useRef(0)
+  const sectionRef    = useRef(null)
+  const activeRef     = useRef(0)
+  const fadingRef     = useRef(false)
+
+  // Wheel state
+  const wheelAccum    = useRef(0)
+  const lastWheelTs   = useRef(0)
+  const cooldownRef   = useRef(false)   // true while transition is playing
+  // Edge-exit: track whether we've "armed" the boundary so one extra scroll exits
+  const edgeArmedRef  = useRef(null)    // 'start' | 'end' | null
+
+  // Touch state
+  const touchStartY   = useRef(0)
+  const touchStartX   = useRef(0)
+  const touchConsumed = useRef(false)
+  const touchExiting  = useRef(false)
 
   const progress = active / (PROJECTS.length - 1)
 
-  // Snap page scroll to the exact top or bottom edge of the tall wrapper.
-  // Called synchronously before releasing the event so there is zero dead space.
+  const isStuck = () => {
+    const el = sectionRef.current
+    if (!el) return false
+    const rect = el.getBoundingClientRect()
+    return rect.top <= 2 && rect.bottom >= window.innerHeight - 2
+  }
+
   const snapEdge = (edge) => {
     const el = sectionRef.current
     if (!el) return
@@ -127,17 +143,10 @@ export default function Projects() {
     }
   }
 
-  // True while the sticky panel is filling the viewport
-  const isStuck = () => {
-    const el = sectionRef.current
-    if (!el) return false
-    const rect = el.getBoundingClientRect()
-    return rect.top <= 2 && rect.bottom >= window.innerHeight - 2
-  }
-
   const goTo = (next) => {
     if (fadingRef.current || next === activeRef.current) return
     fadingRef.current = true
+    cooldownRef.current = true
     setFading(true)
     setTimeout(() => {
       activeRef.current = next
@@ -145,77 +154,113 @@ export default function Projects() {
       setVisible(next)
       fadingRef.current = false
       setFading(false)
-    }, 380)
+      // release wheel cooldown slightly after transition ends
+      setTimeout(() => { cooldownRef.current = false }, 100)
+    }, 750)
   }
 
   const goNext = () => { if (activeRef.current + 1 < PROJECTS.length) goTo(activeRef.current + 1) }
   const goPrev = () => { if (activeRef.current - 1 >= 0)              goTo(activeRef.current - 1) }
 
   useEffect(() => {
-    // ── Wheel ──────────────────────────────────────────────────────────────
+    // ── Wheel ────────────────────────────────────────────────────────────
     const handleWheel = (e) => {
       if (!isStuck()) return
 
-      const atStart   = activeRef.current === 0
-      const atEnd     = activeRef.current === PROJECTS.length - 1
-      const goingDown = e.deltaY > 0
+      const atEnd   = activeRef.current === PROJECTS.length - 1
+      const atStart = activeRef.current === 0
+      const down    = e.deltaY > 0
 
-      if (goingDown && atEnd) {
-        // Snap to bottom edge first so the very next scroll tick exits cleanly
-        snapEdge('bottom')
-        return  // don't preventDefault — let the browser scroll past
+      // --- Edge-exit logic ---
+      // If we're at a boundary and the user scrolls toward the outside,
+      // arm the edge on first scroll, then let the second scroll exit.
+      if (down && atEnd) {
+        if (edgeArmedRef.current === 'end') {
+          // Second scroll: snap to bottom and release
+          snapEdge('bottom')
+          edgeArmedRef.current = null
+          return  // allow browser scroll through
+        }
+        // First scroll: arm it, stay put
+        edgeArmedRef.current = 'end'
+        e.preventDefault()
+        return
       }
-      if (!goingDown && atStart) {
-        snapEdge('top')
+      if (!down && atStart) {
+        if (edgeArmedRef.current === 'start') {
+          snapEdge('top')
+          edgeArmedRef.current = null
+          return
+        }
+        edgeArmedRef.current = 'start'
+        e.preventDefault()
         return
       }
 
+      // Reset arm when scrolling inward
+      edgeArmedRef.current = null
+
       e.preventDefault()
 
+      if (cooldownRef.current) return
+
       const now = Date.now()
-      if (now - lastWheelTs.current > 300) wheelAccum.current = 0
+      // Reset accumulator if the user paused scrolling
+      if (now - lastWheelTs.current > 400) wheelAccum.current = 0
       lastWheelTs.current = now
 
-      const clamped = Math.max(-80, Math.min(80, e.deltaY))
+      // Clamp per-tick delta to avoid trackpad bursts
+      const clamped = Math.max(-60, Math.min(60, e.deltaY))
       wheelAccum.current += clamped
 
-      const THRESHOLD = 120
+      const THRESHOLD = 100
       if (wheelAccum.current >  THRESHOLD) { wheelAccum.current = 0; goNext() }
       if (wheelAccum.current < -THRESHOLD) { wheelAccum.current = 0; goPrev() }
     }
 
-    // ── Touch ──────────────────────────────────────────────────────────────
-    let touchStartY   = 0
-    let touchStartX   = 0
-    let touchConsumed = false
-    let touchReleased = false
-
+    // ── Touch ─────────────────────────────────────────────────────────────
     const onTouchStart = (e) => {
-      touchStartY   = e.touches[0].clientY
-      touchStartX   = e.touches[0].clientX
-      touchConsumed = false
-      touchReleased = false
+      touchStartY.current   = e.touches[0].clientY
+      touchStartX.current   = e.touches[0].clientX
+      touchConsumed.current = false
+      touchExiting.current  = false
     }
 
     const onTouchMove = (e) => {
       if (!isStuck()) return
-      if (touchReleased) return
+      if (touchExiting.current) return
 
-      const dy = touchStartY - e.touches[0].clientY
-      const dx = touchStartX - e.touches[0].clientX
-      if (Math.abs(dx) > Math.abs(dy)) return
+      const dy = touchStartY.current - e.touches[0].clientY
+      const dx = touchStartX.current - e.touches[0].clientX
 
-      const atStart = activeRef.current === 0
+      // Horizontal swipe — don't hijack
+      if (Math.abs(dx) > Math.abs(dy) + 5) return
+
       const atEnd   = activeRef.current === PROJECTS.length - 1
+      const atStart = activeRef.current === 0
 
-      if (dy > 0 && atEnd)   { snapEdge('bottom'); touchReleased = true; return }
-      if (dy < 0 && atStart) { snapEdge('top');    touchReleased = true; return }
+      if (dy > 0 && atEnd) {
+        // swiping down on last — let page scroll through
+        if (dy > 30) {
+          snapEdge('bottom')
+          touchExiting.current = true
+        }
+        return
+      }
+      if (dy < 0 && atStart) {
+        if (dy < -30) {
+          snapEdge('top')
+          touchExiting.current = true
+        }
+        return
+      }
 
       e.preventDefault()
-      if (touchConsumed) return
-      const THRESHOLD = 40
-      if (dy >  THRESHOLD) { touchConsumed = true; goNext() }
-      if (dy < -THRESHOLD) { touchConsumed = true; goPrev() }
+      if (touchConsumed.current || cooldownRef.current) return
+
+      const THRESHOLD = 45
+      if (dy >  THRESHOLD) { touchConsumed.current = true; goNext() }
+      if (dy < -THRESHOLD) { touchConsumed.current = true; goPrev() }
     }
 
     window.addEventListener('wheel',      handleWheel,  { passive: false })
