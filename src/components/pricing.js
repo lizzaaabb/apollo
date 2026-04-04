@@ -1,312 +1,6 @@
 'use client'
 import React, { useEffect, useRef } from 'react'
-
-const styles = `
-@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Afacad:wght@400;500&display=swap');
-
-.pricing-wrapper {
-  align-self: stretch;
-  width: 97%;
-  margin-left: auto;
-  margin-right: auto;
-  border-radius: 20px;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-.pricing-container {
-  position: relative;
-  background: #ffffff;
-  padding: 48px 40px 0;
-  min-height: 100vh;
-  box-sizing: border-box;
-}
-
-.pricing-canvas {
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  z-index: 0 !important;
-  pointer-events: none !important;
-}
-
-.pricing-canvas-fade {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 55%;
-  background: linear-gradient(to bottom, #ffffff 60%, transparent 100%);
-  z-index: 1;
-  pointer-events: none;
-}
-
-.pricing-content {
-  position: relative;
-  z-index: 2;
-}
-
-.pricing-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  text-align: center;
-  margin-bottom: 28px;
-}
-
-.pricing-label {
-  font-family: 'Unbounded', sans-serif;
-  font-size: 0.55rem;
-  font-weight: 400;
-  letter-spacing: 0.30em;
-  color: rgba(0, 0, 0, 0.35);
-  text-transform: uppercase;
-}
-
-.pricing-title {
-  font-family: 'Unbounded', sans-serif;
-  font-size: clamp(1.6rem, 4vw, 3rem);
-  font-weight: 900;
-  color: #0d0820;
-  margin: 0;
-  letter-spacing: -0.03em;
-  line-height: 1.0;
-  text-transform: uppercase;
-}
-
-.pricing-subtitle {
-  font-family: 'Afacad', sans-serif;
-  font-size: 1rem;
-  color: rgba(13, 8, 32, 0.45);
-  margin: 0;
-  font-weight: 400;
-}
-
-.pricing-section {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-bottom: 20px;
-}
-
-.pricing-section-label {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.pricing-section-label span {
-  font-family: 'Unbounded', sans-serif;
-  font-size: 0.5rem;
-  font-weight: 700;
-  letter-spacing: 0.22em;
-  color: rgba(0, 0, 0, 0.35);
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.pricing-section-line {
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(to right, rgba(0, 0, 0, 0.12), transparent);
-}
-
-.pricing-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
-}
-
-.pricing-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  border-radius: 14px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  box-shadow:
-    0 2px 12px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  transition:
-    transform 0.35s cubic-bezier(0.23, 1, 0.32, 1),
-    border-color 0.35s ease,
-    box-shadow 0.35s ease,
-    background 0.35s ease;
-  animation: fadeUp 0.55s cubic-bezier(0.23, 1, 0.32, 1) both;
-}
-
-.pricing-card::after {
-  content: '';
-  position: absolute;
-  top: 0; left: 10%; right: 10%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.5), transparent);
-  opacity: 0;
-  transition: opacity 0.35s ease;
-}
-
-.pricing-card:hover {
-  transform: translateY(-5px);
-  background: rgba(255, 255, 255, 0.60);
-  border-color: rgba(0, 0, 0, 0.22);
-  box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.10),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-}
-
-.pricing-card:hover::after { opacity: 1; }
-
-.pricing-card:nth-child(1) { animation-delay: 0.04s; }
-.pricing-card:nth-child(2) { animation-delay: 0.10s; }
-.pricing-card:nth-child(3) { animation-delay: 0.16s; }
-.pricing-card:nth-child(4) { animation-delay: 0.22s; }
-.pricing-card:nth-child(5) { animation-delay: 0.28s; }
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.pricing-card-price-block {
-  position: relative;
-  z-index: 2;
-  padding: 16px 16px 12px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
-}
-
-.pricing-card-from {
-  font-family: 'Afacad', sans-serif;
-  font-size: 0.65rem;
-  font-weight: 400;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.35);
-  display: block;
-  margin-bottom: 2px;
-}
-
-.pricing-card-price {
-  font-family: 'Unbounded', sans-serif;
-  font-size: clamp(1.2rem, 1.8vw, 1.6rem);
-  font-weight: 900;
-  color: #0d0820;
-  letter-spacing: -0.03em;
-  line-height: 1;
-  transition: color 0.3s ease;
-}
-
-.pricing-card:hover .pricing-card-price { color: #000000; }
-
-.pricing-card-body {
-  position: relative;
-  z-index: 2;
-  padding: 12px 16px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 1;
-}
-
-.pricing-card-top {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.pricing-icon-wrap {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.10);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
-}
-
-.pricing-card:hover .pricing-icon-wrap {
-  background: rgba(0, 0, 0, 0.08);
-  border-color: rgba(0, 0, 0, 0.20);
-  transform: rotate(-8deg) scale(1.08);
-}
-
-.pricing-card-title {
-  font-family: 'Unbounded', sans-serif;
-  font-size: 0.55rem;
-  font-weight: 700;
-  color: #111111;
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  line-height: 1.3;
-}
-
-.pricing-card-desc {
-  font-family: 'Afacad', sans-serif;
-  font-size: 0.88rem;
-  font-weight: 400;
-  color: rgba(0, 0, 0, 0.50);
-  line-height: 1.55;
-  margin: 0;
-  flex: 1;
-}
-
-.pricing-card-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 9px 0;
-  width: 100%;
-  border-radius: 50px;
-  border: 1px solid rgba(0, 0, 0, 0.18);
-  background: transparent;
-  color: rgba(0, 0, 0, 0.65);
-  font-family: 'Unbounded', sans-serif;
-  font-size: 0.48rem;
-  font-weight: 700;
-  letter-spacing: 0.10em;
-  text-transform: uppercase;
-  text-decoration: none;
-  cursor: pointer;
-  margin-top: auto;
-  transition:
-    background 0.25s ease,
-    border-color 0.25s ease,
-    color 0.25s ease,
-    box-shadow 0.25s ease,
-    transform 0.2s ease;
-}
-
-.pricing-card-btn:hover {
-  background: #000000;
-  border-color: transparent;
-  color: #ffffff;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-  transform: translateY(-1px);
-}
-
-@media (max-width: 1100px) {
-  .pricing-grid { grid-template-columns: repeat(3, 1fr); }
-  .pricing-container { padding: 36px 24px 0; }
-}
-@media (max-width: 700px) {
-  .pricing-grid { grid-template-columns: repeat(2, 1fr); }
-  .pricing-title { font-size: 1.5rem; }
-  .pricing-container { padding: 28px 16px 0; }
-}
-@media (max-width: 440px) {
-  .pricing-grid { grid-template-columns: 1fr; }
-}
-`
+import '../styles/pricing.css'
 
 const CONTENT = [
   {
@@ -357,17 +51,6 @@ const CONTENT = [
           </svg>
         ),
       },
-      {
-        title: 'Ad Templates',
-        price: '₾150',
-        description: 'Social media and advertising templates ready for any platform.',
-        icon: (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <rect x="2" y="5" width="20" height="14" rx="2" stroke="#c084fc" strokeWidth="1.8"/>
-            <path d="M8 12h8M12 9v6" stroke="#c084fc" strokeWidth="1.8" strokeLinecap="round"/>
-          </svg>
-        ),
-      },
     ],
   },
   {
@@ -388,22 +71,11 @@ const CONTENT = [
       {
         title: 'Business Website',
         price: '₾1,500',
-        description: 'Informational multi-page website. +₾100 per additional page.',
+        description: 'Multi-page informational website. +₾100 per additional page.',
         icon: (
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke="#c084fc" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             <path d="M9 22V12h6v10" stroke="#c084fc" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        ),
-      },
-      {
-        title: 'Tourism Website',
-        price: '₾1,100',
-        description: 'Stunning travel and hospitality websites built to attract and convert.',
-        icon: (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" stroke="#c084fc" strokeWidth="1.8"/>
-            <path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20" stroke="#c084fc" strokeWidth="1.8" strokeLinecap="round"/>
           </svg>
         ),
       },
@@ -485,7 +157,6 @@ function usePricingBackground(canvasRef, containerRef) {
       camera.position.z = 60
 
       const resize = () => {
-        // reads .pricing-container directly via ref, not canvas.parentElement
         const container = containerRef.current
         const w = container?.offsetWidth || window.innerWidth
         const h = container?.offsetHeight || window.innerHeight
@@ -576,56 +247,55 @@ export default function Pricing() {
   usePricingBackground(canvasRef, containerRef)
 
   return (
-    <>
-      <style>{styles}</style>
-      {/* pricing-wrapper: width 97%, border-radius, overflow:hidden — clips canvas to rounded shape */}
-      <div className='pricing-wrapper'>
-        {/* pricing-container: position:relative so canvas is absolutely positioned inside it */}
-        <div className='pricing-container' ref={containerRef}>
-          <canvas ref={canvasRef} className='pricing-canvas' />
-          <div className='pricing-canvas-fade' />
-          <div className='pricing-content'>
-            <div className='pricing-header'>
-              <span className='pricing-label'>Pricing</span>
-              <h2 className='pricing-title'>Simple pricing</h2>
-              <p className='pricing-subtitle'>No hidden fees. Every project starts with a free consultation.</p>
-            </div>
-            {CONTENT.map((section) => (
-              <div key={section.category} className='pricing-section'>
-                <div className='pricing-section-label'>
-                  <span>{section.category}</span>
-                  <div className='pricing-section-line' />
-                </div>
-                <div className='pricing-grid'>
-                  {section.items.map((item) => (
-                    <div key={item.title} className='pricing-card'>
-                      <div className='pricing-card-price-block'>
-                        <span className='pricing-card-from'>from</span>
-                        <div className='pricing-card-price'>{item.price}</div>
-                      </div>
-                      <div className='pricing-card-body'>
-                        <div className='pricing-card-top'>
-                          <div className='pricing-icon-wrap'>{item.icon}</div>
-                          <h3 className='pricing-card-title'>{item.title}</h3>
-                        </div>
-                        <p className='pricing-card-desc'>{item.description}</p>
-                        <a
-                          href={`https://wa.me/${WHATSAPP}`}
-                          target='_blank'
-                          rel='noreferrer'
-                          className='pricing-card-btn'
-                        >
-                          Get Started ↗
-                        </a>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+    <div className='pricing-wrapper'>
+      <div className='pricing-container' ref={containerRef}>
+        <canvas ref={canvasRef} className='pricing-canvas' />
+        <div className='pricing-canvas-fade' />
+
+        <div className='pricing-content'>
+          <div className='pricing-header'>
+            <span className='pricing-label'>Pricing</span>
+            <h2 className='pricing-title'>Simple pricing</h2>
+            <p className='pricing-subtitle'>No hidden fees. Every project starts with a free consultation.</p>
           </div>
+
+          {CONTENT.map((section) => (
+            <div key={section.category} className='pricing-section'>
+              <div className='pricing-section-label'>
+                <span>{section.category}</span>
+                <div className='pricing-section-line' />
+              </div>
+
+              {/* 2×2 grid — top row + bottom row */}
+              <div className='pricing-grid'>
+                {section.items.map((item, i) => (
+                  <div key={item.title} className='pricing-card' style={{ animationDelay: `${0.04 + i * 0.07}s` }}>
+                    <div className='pricing-card-price-block'>
+                      <span className='pricing-card-from'>from</span>
+                      <div className='pricing-card-price'>{item.price}</div>
+                    </div>
+                    <div className='pricing-card-body'>
+                      <div className='pricing-card-top'>
+                        <div className='pricing-icon-wrap'>{item.icon}</div>
+                        <h3 className='pricing-card-title'>{item.title}</h3>
+                      </div>
+                      <p className='pricing-card-desc'>{item.description}</p>
+                      <a
+                        href={`https://wa.me/${WHATSAPP}`}
+                        target='_blank'
+                        rel='noreferrer'
+                        className='pricing-card-btn'
+                      >
+                        Get Started ↗
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
-    </>
+    </div>
   )
 }
