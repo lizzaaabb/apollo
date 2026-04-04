@@ -130,7 +130,8 @@ export default function Projects() {
     const el = sectionRef.current
     if (!el) return false
     const rect = el.getBoundingClientRect()
-    return rect.top <= 2 && rect.bottom >= window.innerHeight - 2
+    // Use 60px tolerance — mobile browsers shift innerHeight as toolbars show/hide
+    return rect.top <= 60 && rect.bottom >= window.innerHeight - 60
   }
 
   const snapEdge = (edge) => {
@@ -156,7 +157,7 @@ export default function Projects() {
       setFading(false)
       // release wheel cooldown slightly after transition ends
       setTimeout(() => { cooldownRef.current = false }, 100)
-    }, 750)
+    }, 650)
   }
 
   const goNext = () => { if (activeRef.current + 1 < PROJECTS.length) goTo(activeRef.current + 1) }
@@ -263,13 +264,18 @@ export default function Projects() {
       if (dy < -THRESHOLD) { touchConsumed.current = true; goPrev() }
     }
 
+    const el = sectionRef.current
+
     window.addEventListener('wheel',      handleWheel,  { passive: false })
-    window.addEventListener('touchstart', onTouchStart, { passive: true  })
-    window.addEventListener('touchmove',  onTouchMove,  { passive: false })
+    // Attach touch listeners to the full tall wrapper so the entire
+    // section area (not just the sticky child) receives the gestures
+    el?.addEventListener('touchstart', onTouchStart, { passive: true  })
+    el?.addEventListener('touchmove',  onTouchMove,  { passive: false })
+
     return () => {
-      window.removeEventListener('wheel',      handleWheel)
-      window.removeEventListener('touchstart', onTouchStart)
-      window.removeEventListener('touchmove',  onTouchMove)
+      window.removeEventListener('wheel',     handleWheel)
+      el?.removeEventListener('touchstart',  onTouchStart)
+      el?.removeEventListener('touchmove',   onTouchMove)
     }
   }, [])
 
