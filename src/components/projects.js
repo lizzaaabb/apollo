@@ -106,13 +106,34 @@ export default function Projects() {
   const [active,  setActive]  = useState(0)
   const [visible, setVisible] = useState(0)
   const [fading,  setFading]  = useState(false)
-  const sectionRef            = useRef(null)
-  const scrollAccum           = useRef(0)
-  const activeRef             = useRef(0)
-  const fadingRef             = useRef(false)
-  const THRESHOLD             = 60
+
+  const sectionRef  = useRef(null)
+  const activeRef   = useRef(0)
+  const fadingRef   = useRef(false)
+  const wheelAccum  = useRef(0)
+  const lastWheelTs = useRef(0)
 
   const progress = active / (PROJECTS.length - 1)
+
+  // Snap page scroll to the exact top or bottom edge of the tall wrapper.
+  // Called synchronously before releasing the event so there is zero dead space.
+  const snapEdge = (edge) => {
+    const el = sectionRef.current
+    if (!el) return
+    if (edge === 'bottom') {
+      window.scrollTo({ top: el.offsetTop + el.offsetHeight - window.innerHeight, behavior: 'instant' })
+    } else {
+      window.scrollTo({ top: el.offsetTop, behavior: 'instant' })
+    }
+  }
+
+  // True while the sticky panel is filling the viewport
+  const isStuck = () => {
+    const el = sectionRef.current
+    if (!el) return false
+    const rect = el.getBoundingClientRect()
+    return rect.top <= 2 && rect.bottom >= window.innerHeight - 2
+  }
 
   const goTo = (next) => {
     if (fadingRef.current || next === activeRef.current) return
@@ -127,48 +148,74 @@ export default function Projects() {
     }, 380)
   }
 
-  const goNext = () => {
-    const next = activeRef.current + 1
-    if (next < PROJECTS.length) goTo(next)
-  }
-  const goPrev = () => {
-    const next = activeRef.current - 1
-    if (next >= 0) goTo(next)
-  }
+  const goNext = () => { if (activeRef.current + 1 < PROJECTS.length) goTo(activeRef.current + 1) }
+  const goPrev = () => { if (activeRef.current - 1 >= 0)              goTo(activeRef.current - 1) }
 
   useEffect(() => {
+    // ── Wheel ──────────────────────────────────────────────────────────────
     const handleWheel = (e) => {
-      const section = sectionRef.current
-      if (!section) return
-      const rect = section.getBoundingClientRect()
-      const isActive = rect.top <= 0 && rect.bottom > window.innerHeight
-      if (!isActive) return
+      if (!isStuck()) return
 
-      const down = e.deltaY > 0
-      const up   = e.deltaY < 0
+      const atStart   = activeRef.current === 0
+      const atEnd     = activeRef.current === PROJECTS.length - 1
+      const goingDown = e.deltaY > 0
 
-      if (down && activeRef.current === PROJECTS.length - 1) return
-      if (up   && activeRef.current === 0) return
+      if (goingDown && atEnd) {
+        // Snap to bottom edge first so the very next scroll tick exits cleanly
+        snapEdge('bottom')
+        return  // don't preventDefault — let the browser scroll past
+      }
+      if (!goingDown && atStart) {
+        snapEdge('top')
+        return
+      }
 
       e.preventDefault()
-      scrollAccum.current += e.deltaY
-      if (scrollAccum.current >  THRESHOLD) { scrollAccum.current = 0; goNext() }
-      if (scrollAccum.current < -THRESHOLD) { scrollAccum.current = 0; goPrev() }
+
+      const now = Date.now()
+      if (now - lastWheelTs.current > 300) wheelAccum.current = 0
+      lastWheelTs.current = now
+
+      const clamped = Math.max(-80, Math.min(80, e.deltaY))
+      wheelAccum.current += clamped
+
+      const THRESHOLD = 120
+      if (wheelAccum.current >  THRESHOLD) { wheelAccum.current = 0; goNext() }
+      if (wheelAccum.current < -THRESHOLD) { wheelAccum.current = 0; goPrev() }
     }
 
-    let touchY = 0
-    const onTouchStart = (e) => { touchY = e.touches[0].clientY }
-    const onTouchMove  = (e) => {
-      const section = sectionRef.current
-      if (!section) return
-      const rect = section.getBoundingClientRect()
-      const isActive = rect.top <= 0 && rect.bottom > window.innerHeight
-      if (!isActive) return
-      const dy = touchY - e.touches[0].clientY
-      if (dy > 50 && activeRef.current === PROJECTS.length - 1) return
-      if (dy < -50 && activeRef.current === 0) return
-      if (dy >  50) { e.preventDefault(); goNext(); touchY = e.touches[0].clientY }
-      if (dy < -50) { e.preventDefault(); goPrev(); touchY = e.touches[0].clientY }
+    // ── Touch ──────────────────────────────────────────────────────────────
+    let touchStartY   = 0
+    let touchStartX   = 0
+    let touchConsumed = false
+    let touchReleased = false
+
+    const onTouchStart = (e) => {
+      touchStartY   = e.touches[0].clientY
+      touchStartX   = e.touches[0].clientX
+      touchConsumed = false
+      touchReleased = false
+    }
+
+    const onTouchMove = (e) => {
+      if (!isStuck()) return
+      if (touchReleased) return
+
+      const dy = touchStartY - e.touches[0].clientY
+      const dx = touchStartX - e.touches[0].clientX
+      if (Math.abs(dx) > Math.abs(dy)) return
+
+      const atStart = activeRef.current === 0
+      const atEnd   = activeRef.current === PROJECTS.length - 1
+
+      if (dy > 0 && atEnd)   { snapEdge('bottom'); touchReleased = true; return }
+      if (dy < 0 && atStart) { snapEdge('top');    touchReleased = true; return }
+
+      e.preventDefault()
+      if (touchConsumed) return
+      const THRESHOLD = 40
+      if (dy >  THRESHOLD) { touchConsumed = true; goNext() }
+      if (dy < -THRESHOLD) { touchConsumed = true; goPrev() }
     }
 
     window.addEventListener('wheel',      handleWheel,  { passive: false })
@@ -180,23 +227,6 @@ export default function Projects() {
       window.removeEventListener('touchmove',  onTouchMove)
     }
   }, [])
-
-  // Jump scroll position to wrapper boundary when first/last project is reached
-  useEffect(() => {
-    if (!sectionRef.current) return
-    const section = sectionRef.current
-    const rect = section.getBoundingClientRect()
-    const isStuck = rect.top < 0 && rect.bottom > window.innerHeight
-
-    if (active === PROJECTS.length - 1 && isStuck) {
-      const target = section.offsetTop + section.offsetHeight - window.innerHeight
-      window.scrollTo({ top: target, behavior: 'instant' })
-    }
-
-    if (active === 0 && isStuck) {
-      window.scrollTo({ top: section.offsetTop, behavior: 'instant' })
-    }
-  }, [active])
 
   const proj = PROJECTS[visible]
 
@@ -214,7 +244,6 @@ export default function Projects() {
           </div>
 
           <div className='proj-card'>
-
             <div className='proj-progress-track'>
               <div
                 className='proj-progress-fill'
@@ -304,7 +333,6 @@ export default function Projects() {
                 </div>
               </div>
             </div>
-
           </div>
 
           {active < PROJECTS.length - 1 && (
