@@ -33,7 +33,7 @@
   font-size: clamp(7rem, 16vw, 14rem);
   font-weight: 900;
   color: transparent;
-  -webkit-text-stroke: 1px rgba(192, 132, 252, 0.301);
+  -webkit-text-stroke: 1px rgba(192, 132, 252, 0.429);
   line-height: 1;
   user-select: none;
   pointer-events: none;
