@@ -1,0 +1,321 @@
+/* ══════════════════════════════
+   PRICING — WHITE EDITION
+   Unbounded (headers) · Afacad (body)
+══════════════════════════════ */
+
+.pricing-container {
+  align-self: stretch;        /* ← breaks out of the center-squeeze */
+  position: relative;        /* ← fix border-radius clipping */
+  background: #ffffff;
+  padding: 48px 40px 0;
+  height: 100vh;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 20px;
+  box-sizing: border-box;
+}
+
+/* ── Three.js canvas — full container, behind everything ── */
+.pricing-canvas {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Fade — white at top fading out so wave only shows near cards */
+.pricing-canvas-fade {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 55%;
+  background: linear-gradient(to bottom, #ffffff 60%, transparent 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* All cards and text sit above the wave */
+.pricing-content {
+  position: relative;
+  z-index: 2;
+}
+
+/* ── Header ── */
+.pricing-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.pricing-label {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 0.55rem;
+  font-weight: 400;
+  letter-spacing: 0.30em;
+  color: rgba(0, 0, 0, 0.35);
+  text-transform: uppercase;
+}
+
+.pricing-title {
+  font-family: 'Unbounded', sans-serif;
+  font-size: clamp(1.6rem, 4vw, 3rem);
+  font-weight: 900;
+  color: #0d0820;
+  margin: 0;
+  letter-spacing: -0.03em;
+  line-height: 1.0;
+  text-transform: uppercase;
+}
+
+.pricing-subtitle {
+  font-family: 'Afacad', sans-serif;
+  font-size: 1rem;
+  color: rgba(13, 8, 32, 0.45);
+  margin: 0;
+  font-weight: 400;
+}
+
+/* ── Section ── */
+.pricing-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.pricing-section-label {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.pricing-section-label span {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: rgba(0, 0, 0, 0.35);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pricing-section-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.12), transparent);
+}
+
+/* ── Grid ── */
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+/* ══════════════════════════════
+   CARD — transparent + black borders
+══════════════════════════════ */
+.pricing-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition:
+    transform 0.35s cubic-bezier(0.23, 1, 0.32, 1),
+    border-color 0.35s ease,
+    box-shadow 0.35s ease,
+    background 0.35s ease;
+}
+
+.pricing-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.5), transparent);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.pricing-card:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.60);
+  border-color: rgba(0, 0, 0, 0.22);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.pricing-card:hover::after { opacity: 1; }
+
+/* ── Price hero ── */
+.pricing-card-price-block {
+  position: relative;
+  z-index: 2;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+.pricing-card-from {
+  font-family: 'Afacad', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.35);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.pricing-card-price {
+  font-family: 'Unbounded', sans-serif;
+  font-size: clamp(1.2rem, 1.8vw, 1.6rem);
+  font-weight: 900;
+  color: #0d0820;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  transition: color 0.3s ease;
+}
+
+.pricing-card:hover .pricing-card-price {
+  color: #000000;
+}
+
+/* ── Body ── */
+.pricing-card-body {
+  position: relative;
+  z-index: 2;
+  padding: 12px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+/* ── Icon + Title row ── */
+.pricing-card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pricing-icon-wrap {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+}
+
+.pricing-card:hover .pricing-icon-wrap {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.20);
+  transform: rotate(-8deg) scale(1.08);
+}
+
+.pricing-card-title {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: #111111;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+}
+
+/* ── Description ── */
+.pricing-card-desc {
+  font-family: 'Afacad', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.50);
+  line-height: 1.55;
+  margin: 0;
+  flex: 1;
+}
+
+/* ── Button ── */
+.pricing-card-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 0;
+  width: 100%;
+  border-radius: 50px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  background: transparent;
+  color: rgba(0, 0, 0, 0.65);
+  font-family: 'Unbounded', sans-serif;
+  font-size: 0.48rem;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  margin-top: auto;
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.2s ease;
+}
+
+.pricing-card-btn:hover {
+  background: #000000;
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  transform: translateY(-1px);
+}
+
+/* ── Stagger entrance ── */
+.pricing-card {
+  animation: fadeUp 0.55s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.pricing-card:nth-child(1) { animation-delay: 0.04s; }
+.pricing-card:nth-child(2) { animation-delay: 0.10s; }
+.pricing-card:nth-child(3) { animation-delay: 0.16s; }
+.pricing-card:nth-child(4) { animation-delay: 0.22s; }
+.pricing-card:nth-child(5) { animation-delay: 0.28s; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Responsive ── */
+@media (max-width: 1100px) {
+  .pricing-grid { grid-template-columns: repeat(3, 1fr); }
+  .pricing-container { padding: 36px 24px 0; }
+}
+@media (max-width: 700px) {
+  .pricing-grid { grid-template-columns: repeat(2, 1fr); }
+  .pricing-title { font-size: 1.5rem; }
+  .pricing-container { padding: 28px 16px 0; }
+}
+@media (max-width: 440px) {
+  .pricing-grid { grid-template-columns: 1fr; }
+}

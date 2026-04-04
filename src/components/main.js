@@ -120,6 +120,8 @@ function Main() {
 
   return (
     <>
+      <canvas ref={canvasRef} className="ripple-canvas" />
+
       <div
         ref={heroRef}
         style={{
@@ -129,7 +131,6 @@ function Main() {
         }}
       >
         <div className='main-container'>
-          <canvas ref={canvasRef} className="ripple-canvas" />
           <div className="left-container">
             <h1 className='header'>We are</h1>
             <h1 className='header header--accent'>Full-stack</h1>

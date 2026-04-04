@@ -5,6 +5,9 @@ import ThreeBackground from './three'
 import Main from '../components/main'
 import Services from '../components/services'
 import Clients from '../components/clients'
+import Projects from './projects'
+import Pricing from './pricing'
+import CTA from './cta'
 
 function Landing() {
   return (
@@ -15,6 +18,9 @@ function Landing() {
         <Main/>
         <Services />
         <Clients />
+        <Projects />
+        <Pricing />
+        <CTA />
       </div>
     </>
   )

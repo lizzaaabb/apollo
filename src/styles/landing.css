@@ -10,7 +10,7 @@
 .landing-container {
   /* transparent so ThreeBackground shows through */
   background-color: transparent;
-  min-height: 800vh;
+  min-height: auto;
   color: white;
   display: flex;
   align-items: center;

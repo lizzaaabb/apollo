@@ -207,7 +207,7 @@ vec3 frostEdge    = vec3(0.75, 0.70, 0.90); // almost-white frost for rim
         const scrollY = window.scrollY
         const docHeight = document.body.scrollHeight - window.innerHeight
         const progress = docHeight > 0 ? scrollY / docHeight : 0
-        targetScale = 1.0 + progress * 3.5
+        targetScale = 1.0 + progress * 2
       }
       window.addEventListener('scroll', handleScroll)
 
