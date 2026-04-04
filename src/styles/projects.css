@@ -4,7 +4,6 @@
   width: 100%;
   display: flex;
   justify-content: center;
-  touch-action: none;
 }
 
 .proj-sticky {
@@ -15,7 +14,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  touch-action: none;
 }
 
 /* ── Outer layout ── */

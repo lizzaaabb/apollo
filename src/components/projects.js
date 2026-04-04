@@ -229,7 +229,6 @@ export default function Projects() {
 
     const onTouchMove = (e) => {
       if (!isStuck()) return
-      if (touchExiting.current) return
 
       const dy = touchStartY.current - e.touches[0].clientY
       const dx = touchStartX.current - e.touches[0].clientX
@@ -240,23 +239,27 @@ export default function Projects() {
       const atEnd   = activeRef.current === PROJECTS.length - 1
       const atStart = activeRef.current === 0
 
+      // At edges — let the page scroll through naturally, don't preventDefault
       if (dy > 0 && atEnd) {
-        // swiping down on last — let page scroll through
-        if (dy > 30) {
-          snapEdge('bottom')
+        if (!touchExiting.current && dy > 30) {
           touchExiting.current = true
+          snapEdge('bottom')
         }
-        return
+        return  // no preventDefault — browser takes over
       }
       if (dy < 0 && atStart) {
-        if (dy < -30) {
-          snapEdge('top')
+        if (!touchExiting.current && dy < -30) {
           touchExiting.current = true
+          snapEdge('top')
         }
-        return
+        return  // no preventDefault — browser takes over
       }
 
+      if (touchExiting.current) return
+
+      // Mid-section — block native scroll and handle ourselves
       e.preventDefault()
+
       if (touchConsumed.current || cooldownRef.current) return
 
       const THRESHOLD = 45
