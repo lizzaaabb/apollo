@@ -6,6 +6,10 @@
   justify-content: center;
 }
 
+.proj-scroll-wrapper.proj-touch-lock {
+  touch-action: pan-x;
+}
+
 .proj-sticky {
   position: sticky;
   top: 0;

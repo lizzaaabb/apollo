@@ -155,7 +155,10 @@ export default function Projects() {
       setVisible(next)
       fadingRef.current = false
       setFading(false)
-      // release wheel cooldown slightly after transition ends
+      // Update touch lock for new position
+      const nowAtEnd   = next === PROJECTS.length - 1
+      const nowAtStart = next === 0
+      sectionRef.current?.classList.toggle('proj-touch-lock', !nowAtEnd && !nowAtStart)
       setTimeout(() => { cooldownRef.current = false }, 100)
     }, 650)
   }
@@ -219,46 +222,63 @@ export default function Projects() {
       if (wheelAccum.current < -THRESHOLD) { wheelAccum.current = 0; goPrev() }
     }
 
+    const setTouchLock = (locked) => {
+      sectionRef.current?.classList.toggle('proj-touch-lock', locked)
+    }
+
     // ── Touch ─────────────────────────────────────────────────────────────
     const onTouchStart = (e) => {
       touchStartY.current   = e.touches[0].clientY
       touchStartX.current   = e.touches[0].clientX
       touchConsumed.current = false
       touchExiting.current  = false
+
+      // Lock vertical scroll if we're stuck and mid-section
+      if (isStuck()) {
+        const atEnd   = activeRef.current === PROJECTS.length - 1
+        const atStart = activeRef.current === 0
+        // Only lock if there's somewhere to go inside the section
+        const willLock = !((atEnd) || (atStart))
+        setTouchLock(willLock)
+      }
     }
 
     const onTouchMove = (e) => {
-      if (!isStuck()) return
+      if (!isStuck()) {
+        setTouchLock(false)
+        return
+      }
 
       const dy = touchStartY.current - e.touches[0].clientY
       const dx = touchStartX.current - e.touches[0].clientX
 
-      // Horizontal swipe — don't hijack
       if (Math.abs(dx) > Math.abs(dy) + 5) return
 
       const atEnd   = activeRef.current === PROJECTS.length - 1
       const atStart = activeRef.current === 0
 
-      // At edges — let the page scroll through naturally, don't preventDefault
       if (dy > 0 && atEnd) {
+        setTouchLock(false)
         if (!touchExiting.current && dy > 30) {
           touchExiting.current = true
           snapEdge('bottom')
         }
-        return  // no preventDefault — browser takes over
+        return
       }
       if (dy < 0 && atStart) {
+        setTouchLock(false)
         if (!touchExiting.current && dy < -30) {
           touchExiting.current = true
           snapEdge('top')
         }
-        return  // no preventDefault — browser takes over
+        return
       }
 
       if (touchExiting.current) return
 
-      // Mid-section — block native scroll and handle ourselves
+      // Mid-section — we have touch-action:pan-x so preventDefault works
       e.preventDefault()
+      setTouchLock(true)
 
       if (touchConsumed.current || cooldownRef.current) return
 
@@ -267,18 +287,29 @@ export default function Projects() {
       if (dy < -THRESHOLD) { touchConsumed.current = true; goPrev() }
     }
 
+    const onTouchEnd = () => {
+      // Re-evaluate lock state after finger lifts
+      if (!isStuck()) {
+        setTouchLock(false)
+        return
+      }
+      const atEnd   = activeRef.current === PROJECTS.length - 1
+      const atStart = activeRef.current === 0
+      setTouchLock(!atEnd && !atStart)
+    }
+
     const el = sectionRef.current
 
     window.addEventListener('wheel',      handleWheel,  { passive: false })
-    // Attach touch listeners to the full tall wrapper so the entire
-    // section area (not just the sticky child) receives the gestures
     el?.addEventListener('touchstart', onTouchStart, { passive: true  })
     el?.addEventListener('touchmove',  onTouchMove,  { passive: false })
+    el?.addEventListener('touchend',   onTouchEnd,   { passive: true  })
 
     return () => {
       window.removeEventListener('wheel',     handleWheel)
       el?.removeEventListener('touchstart',  onTouchStart)
       el?.removeEventListener('touchmove',   onTouchMove)
+      el?.removeEventListener('touchend',    onTouchEnd)
     }
   }, [])
 
