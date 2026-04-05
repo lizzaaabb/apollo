@@ -17,29 +17,30 @@
 .proj-card-wrap {
   position: relative;
   width: 100%;
+  overflow: visible;
 }
 
-/* ── Big background number ── */
 .proj-number {
   font-family: 'Unbounded', sans-serif;
   font-size: clamp(7rem, 16vw, 14rem);
   font-weight: 900;
   color: transparent;
-  -webkit-text-stroke: 1px rgba(192, 132, 252, 0.429);
+  -webkit-text-stroke: 1px rgba(192, 132, 252, 0.485);
+  -webkit-text-fill-color: transparent;
   line-height: 1;
   user-select: none;
   pointer-events: none;
   position: absolute;
   top: -60px;
   left: -10px;
-  z-index: 0;
+  z-index: 2;
   letter-spacing: -0.04em;
 }
 
 /* ── Main glass card ── */
 .proj-card {
   position: relative;
-  z-index: 1;
+  z-index: 11;
   width: 100%;
   display: flex;
   flex-direction: row;
@@ -56,7 +57,6 @@
   overflow: hidden;
   min-height: 420px;
 }
-
 /* ── Scroll progress indicator ── */
 .proj-progress-track {
   position: absolute;

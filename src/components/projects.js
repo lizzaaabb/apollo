@@ -133,6 +133,7 @@ export default function Projects() {
     <div className='proj-outer'>
       <div className='proj-card-wrap'>
 
+        {/* Number sits OUTSIDE the card, above it in z-index */}
         <div className={`proj-number ${fading ? 'proj-fade-out' : 'proj-fade-in'}`}>
           {proj.index}
         </div>
