@@ -283,3 +283,14 @@
   .pricing-card-footer { padding: 10px 14px 14px; }
   .pricing-card-btn { font-size: 0.38rem; }
 }
+@media (max-width: 640px) {
+  .pricing-card-amount {
+    font-size: 1rem;
+  }
+  .pricing-card-from {
+    font-size: 0.55rem;
+  }
+  .pricing-card-title {
+    font-size: 0.65rem;
+  }
+}
