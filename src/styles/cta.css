@@ -361,8 +361,9 @@
   .grid { padding: 32px 16px; gap: 32px; }
   .actions { flex-direction: column; width: 100%; }
   .btn-solid, .btn-ghost { justify-content: center; }
-  .model-wrap { height: 420px; min-height: 410px;
-  padding-bottom: 17px; }
+  .model-wrap { height: 540px; min-height: 430px;
+  padding-bottom: 17px;
+padding-top: 17px; }
   .glass-card { padding: 22px 18px; }
   .contact-card { flex-wrap: wrap; gap: 14px; }
   .bar { padding: 14px 16px; }

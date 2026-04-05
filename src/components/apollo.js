@@ -34,7 +34,7 @@ export default function Apollo() {
       ro.observe(canvas)
 
       new GLTFLoader().load(
-        '/apollo.glb',
+        './afrodite.glb',
         (gltf) => {
           const model = gltf.scene
 
@@ -48,51 +48,81 @@ export default function Apollo() {
           pivot.add(model)
           scene.add(pivot)
 
-          // Pull camera closer on mobile
           const isMobile = window.innerWidth < 768
-          const camDist = isMobile ? maxDim * 1.5 : maxDim * 2.6
+          const camDist = isMobile ? maxDim * 1.4 : maxDim * 1.6
           camera.position.set(0, 0, camDist)
           camera.near = maxDim * 0.01
           camera.far  = maxDim * 20
           camera.updateProjectionMatrix()
 
+          // purple (bottom) → pink (mid) → light sky-blue (top)
+          const getColor = (t) => {
+            const c = Math.max(0, Math.min(1, t))
+            if (c < 0.5) {
+              const s = c * 2
+              // deep purple → hot pink
+              return [
+                0.55 + s * 0.45,  // R: 0.55 → 1.0
+                0.1  + s * 0.2,   // G: 0.1  → 0.3
+                0.95 - s * 0.35,  // B: 0.95 → 0.6
+              ]
+            } else {
+              const s = (c - 0.5) * 2
+              // hot pink → light sky-blue
+              return [
+                1.0  - s * 0.65,  // R: 1.0  → 0.35
+                0.3  + s * 0.55,  // G: 0.3  → 0.85
+                0.6  + s * 0.4,   // B: 0.6  → 1.0
+              ]
+            }
+          }
+
+          const makeMaterial = () =>
+            new THREE.PointsMaterial({
+              size: isMobile ? 0.065 : 0.035,
+              sizeAttenuation: true,
+              vertexColors: true,
+              transparent: true,
+              opacity: 1.0,
+              blending: THREE.AdditiveBlending,
+              depthWrite: false,
+            })
+
+          const buildColoredPoints = (geometry) => {
+            // Clone geometry so the color attribute is fresh and isolated
+            const geo = geometry.clone()
+            const positions = geo.attributes.position
+            const count = positions.count
+            const colors = new Float32Array(count * 3)
+
+            for (let i = 0; i < count; i++) {
+              const y = positions.getY(i)
+              const t = (y - box.min.y) / (box.max.y - box.min.y)
+              const [r, g, b] = getColor(t)
+              colors[i * 3]     = r
+              colors[i * 3 + 1] = g
+              colors[i * 3 + 2] = b
+            }
+
+            geo.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+            return new THREE.Points(geo, makeMaterial())
+          }
+
           model.traverse((child) => {
             if (child.isPoints) {
-              const positions = child.geometry.attributes.position
-              const count = positions.count
-              const colors = new Float32Array(count * 3)
-              for (let i = 0; i < count; i++) {
-                const y = positions.getY(i)
-                const t = (y - box.min.y) / (box.max.y - box.min.y)
-                colors[i * 3]     = 1.0
-                colors[i * 3 + 1] = 0.3 + t * 0.4
-                colors[i * 3 + 2] = t * 0.1
-              }
-              child.geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
-              child.material = new THREE.PointsMaterial({
-                size: isMobile ? 0.065 : 0.018,  // bigger dots on mobile
-                sizeAttenuation: true,
-                vertexColors: true,
-                transparent: true,
-                opacity: 0.9,
-                blending: THREE.AdditiveBlending,
-                depthWrite: false,
-              })
+              const points = buildColoredPoints(child.geometry)
+              child.parent.add(points)
+              child.visible = false
             }
+
             if (child.isMesh) {
-              child.material = new THREE.MeshStandardMaterial({
-                color: 0xff6020,
-                metalness: 0.9,
-                roughness: 0.1,
-                emissive: 0xff3000,
-                emissiveIntensity: 0.8,
-                transparent: true,
-                opacity: 0.15,
-              })
+              const points = buildColoredPoints(child.geometry)
+              child.parent.add(points)
+              child.visible = false
             }
           })
 
-          // Grow-in
+          // Grow-in animation
           pivot.scale.setScalar(0)
           const t0 = performance.now()
           const grow = (now) => {
@@ -110,10 +140,7 @@ export default function Apollo() {
             const d = (now - last) / 1000
             last = now
 
-            // Slow spin
             pivot.rotation.y += d * 0.25
-
-            // Gentle float up and down
             pivot.position.y = Math.sin(now * 0.0008) * (maxDim * 0.04)
 
             renderer.render(scene, camera)
