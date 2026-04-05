@@ -1,11 +1,6 @@
 .page {
-  --background: #0d0820;
+  --background: transparent;
   --foreground: rgba(255, 255, 255, 0.04);
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.45);
-  --button-primary-hover: #a855f7;
-  --button-secondary-hover: rgba(192, 132, 252, 0.08);
-  --button-secondary-border: rgba(192, 132, 252, 0.25);
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -23,7 +18,7 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: space-between;
-  background-color: var(--foreground);
+  background-color: transparent;
   padding: 120px 60px;
 }
 
