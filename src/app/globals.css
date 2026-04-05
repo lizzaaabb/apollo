@@ -1,12 +1,12 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #1a0f3a;
+  --foreground: #1a0f3a;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #1a0f3a;
+    --foreground: #1a0f3a;
   }
 }
 
@@ -46,4 +46,10 @@ a {
   html {
     color-scheme: dark;
   }
+}
+
+html, body, #__next {
+  background-color: #1a0f3a;
+  margin: 0;
+  padding: 0;
 }
