@@ -50,7 +50,7 @@ export default function Apollo() {
 
           // Pull camera closer on mobile
           const isMobile = window.innerWidth < 768
-          const camDist = isMobile ? maxDim * 1.8 : maxDim * 2.6
+          const camDist = isMobile ? maxDim * 1.5 : maxDim * 2.6
           camera.position.set(0, 0, camDist)
           camera.near = maxDim * 0.01
           camera.far  = maxDim * 20
@@ -70,7 +70,7 @@ export default function Apollo() {
               }
               child.geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
               child.material = new THREE.PointsMaterial({
-                size: isMobile ? 0.025 : 0.018,  // bigger dots on mobile
+                size: isMobile ? 0.065 : 0.018,  // bigger dots on mobile
                 sizeAttenuation: true,
                 vertexColors: true,
                 transparent: true,
