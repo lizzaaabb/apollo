@@ -141,7 +141,7 @@ export default function Apollo() {
             last = now
 
             pivot.rotation.y += d * 0.25
-            pivot.position.y = Math.sin(now * 0.0008) * (maxDim * 0.04)
+            pivot.position.y = Math.sin(now * 0.0008) * (maxDim * (isMobile ? 0.01 : 0.04))
 
             renderer.render(scene, camera)
           }
