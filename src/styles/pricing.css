@@ -284,6 +284,3 @@
   .pricing-card-btn { font-size: 0.38rem; }
 }
 
-@media (max-width: 420px) {
-  .pricing-grid { grid-template-columns: 1fr; }
-}
