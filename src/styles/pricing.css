@@ -243,20 +243,23 @@
   .pricing-card-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 4px;
+    gap: 6px;
     min-height: unset;
     padding: 12px 14px;
   }
-  .pricing-card-price {
-    align-items: flex-start; /* price aligns left under title */
+  .pricing-card-title {
+    font-size: 0.7rem;
+    width: 100%;
   }
-  .pricing-card-amount {
-    font-size: 1.1rem;
+  .pricing-card-price {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 6px;
   }
   .pricing-card-from {
     font-size: 0.55rem;
   }
-  .pricing-card-title {
-    font-size: 0.7rem;
+  .pricing-card-amount {
+    font-size: 1rem;
   }
 }
