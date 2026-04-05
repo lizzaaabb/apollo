@@ -1,34 +1,22 @@
-/* ── Scroll + sticky wrapper ── */
-.proj-scroll-wrapper {
-  position: relative;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-
-.proj-scroll-wrapper.proj-touch-lock {
-  touch-action: pan-x;
-}
-
-.proj-sticky {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 /* ── Outer layout ── */
 .proj-outer {
   position: relative;
   width: 92%;
   max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 24px;
+  height: 90vh;
+}
+
+/* ── Card + number wrapper — number is positioned relative to this ── */
+.proj-card-wrap {
+  position: relative;
+  width: 100%;
 }
 
 /* ── Big background number ── */
@@ -85,8 +73,7 @@
   width: 100%;
   background: linear-gradient(180deg, #c084fc, #818cf8);
   border-radius: 3px;
-  /* Smoother, slower transition — was 0.5s cubic-bezier */
-  transition: height 0.75s cubic-bezier(0.65, 0, 0.35, 1);
+  transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   min-height: 0;
 }
@@ -116,7 +103,7 @@
   border-radius: 50%;
   background: rgba(192, 132, 252, 0.2);
   border: 1px solid rgba(192, 132, 252, 0.3);
-  transition: background 0.5s ease, box-shadow 0.5s ease;
+  transition: background 0.4s ease, box-shadow 0.4s ease;
 }
 
 .proj-progress-marker-dot--active {
@@ -209,7 +196,9 @@
   gap: 8px;
 }
 
+/* ── Nav buttons with pulse ── */
 .proj-nav-btn {
+  position: relative;
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -220,15 +209,49 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
 }
-.proj-nav-btn:hover:not(:disabled) {
-  background: rgba(192, 132, 252, 0.2);
-  border-color: rgba(192, 132, 252, 0.55);
+
+.proj-nav-btn--pulse::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(192, 132, 252, 0.55);
+  animation: navRipple 2s ease-out infinite;
+  pointer-events: none;
+}
+
+.proj-nav-btn--pulse::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(192, 132, 252, 0.3);
+  animation: navRipple 2s ease-out 0.7s infinite;
+  pointer-events: none;
+}
+
+@keyframes navRipple {
+  0%   { transform: scale(1);   opacity: 1; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+
+.proj-nav-btn--pulse {
+  border-color: rgba(192, 132, 252, 0.5);
+  background: rgba(192, 132, 252, 0.12);
+  color: #c084fc;
+}
+
+.proj-nav-btn--pulse:hover {
+  background: rgba(192, 132, 252, 0.22);
+  border-color: rgba(192, 132, 252, 0.75);
   color: #fff;
+  transform: scale(1.08);
 }
-.proj-nav-btn:disabled {
-  opacity: 0.25;
+
+.proj-nav-btn--disabled {
+  opacity: 0.2;
   cursor: default;
 }
 
@@ -369,35 +392,18 @@
   border: 1px solid rgba(192, 132, 252, 0.15);
 }
 
-/* ── Scroll hint ── */
-.proj-hint {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: 'Afacad', sans-serif;
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.2);
-  letter-spacing: 0.08em;
-  animation: hintBob 2.2s ease-in-out infinite;
-}
-
-@keyframes hintBob {
-  0%, 100% { transform: translateY(0);   opacity: 0.4; }
-  50%       { transform: translateY(5px); opacity: 0.8; }
-}
-
 /* ── Fade transitions ── */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(18px); }
+  from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0);    }
 }
 @keyframes fadeOut {
   from { opacity: 1; transform: translateY(0);     }
-  to   { opacity: 0; transform: translateY(-14px); }
+  to   { opacity: 0; transform: translateY(-10px); }
 }
 
-.proj-fade-in  { animation: fadeIn  0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-.proj-fade-out { animation: fadeOut 0.6s cubic-bezier(0.4, 0, 0.6, 1) forwards; }
+.proj-fade-in  { animation: fadeIn  0.38s ease forwards; }
+.proj-fade-out { animation: fadeOut 0.28s ease forwards; }
 
 /* ── Responsive ── */
 @media (max-width: 900px) {
@@ -412,7 +418,7 @@
   }
   .proj-left  { padding: 40px 32px 24px; }
   .proj-right { padding: 24px 32px 40px; }
-  .proj-number { font-size: 5rem; top: -40px; }
+  .proj-number { font-size: 5rem; top: -50px; }
 }
 
 @media (max-width: 520px) {

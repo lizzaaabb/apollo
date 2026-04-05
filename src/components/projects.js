@@ -106,48 +106,14 @@ export default function Projects() {
   const [active,  setActive]  = useState(0)
   const [visible, setVisible] = useState(0)
   const [fading,  setFading]  = useState(false)
-
-  const sectionRef    = useRef(null)
-  const activeRef     = useRef(0)
-  const fadingRef     = useRef(false)
-
-  // Wheel state
-  const wheelAccum    = useRef(0)
-  const lastWheelTs   = useRef(0)
-  const cooldownRef   = useRef(false)   // true while transition is playing
-  // Edge-exit: track whether we've "armed" the boundary so one extra scroll exits
-  const edgeArmedRef  = useRef(null)    // 'start' | 'end' | null
-
-  // Touch state
-  const touchStartY   = useRef(0)
-  const touchStartX   = useRef(0)
-  const touchConsumed = useRef(false)
-  const touchExiting  = useRef(false)
+  const fadingRef = useRef(false)
+  const activeRef = useRef(0)
 
   const progress = active / (PROJECTS.length - 1)
-
-  const isStuck = () => {
-    const el = sectionRef.current
-    if (!el) return false
-    const rect = el.getBoundingClientRect()
-    // Use 60px tolerance — mobile browsers shift innerHeight as toolbars show/hide
-    return rect.top <= 60 && rect.bottom >= window.innerHeight - 60
-  }
-
-  const snapEdge = (edge) => {
-    const el = sectionRef.current
-    if (!el) return
-    if (edge === 'bottom') {
-      window.scrollTo({ top: el.offsetTop + el.offsetHeight - window.innerHeight, behavior: 'instant' })
-    } else {
-      window.scrollTo({ top: el.offsetTop, behavior: 'instant' })
-    }
-  }
 
   const goTo = (next) => {
     if (fadingRef.current || next === activeRef.current) return
     fadingRef.current = true
-    cooldownRef.current = true
     setFading(true)
     setTimeout(() => {
       activeRef.current = next
@@ -155,281 +121,123 @@ export default function Projects() {
       setVisible(next)
       fadingRef.current = false
       setFading(false)
-      // Update touch lock for new position
-      const nowAtEnd   = next === PROJECTS.length - 1
-      const nowAtStart = next === 0
-      sectionRef.current?.classList.toggle('proj-touch-lock', !nowAtEnd && !nowAtStart)
-      setTimeout(() => { cooldownRef.current = false }, 100)
-    }, 650)
+    }, 380)
   }
 
   const goNext = () => { if (activeRef.current + 1 < PROJECTS.length) goTo(activeRef.current + 1) }
   const goPrev = () => { if (activeRef.current - 1 >= 0)              goTo(activeRef.current - 1) }
 
-  useEffect(() => {
-    // ── Wheel ────────────────────────────────────────────────────────────
-    const handleWheel = (e) => {
-      if (!isStuck()) return
-
-      const atEnd   = activeRef.current === PROJECTS.length - 1
-      const atStart = activeRef.current === 0
-      const down    = e.deltaY > 0
-
-      // --- Edge-exit logic ---
-      // If we're at a boundary and the user scrolls toward the outside,
-      // arm the edge on first scroll, then let the second scroll exit.
-      if (down && atEnd) {
-        if (edgeArmedRef.current === 'end') {
-          // Second scroll: snap to bottom and release
-          snapEdge('bottom')
-          edgeArmedRef.current = null
-          return  // allow browser scroll through
-        }
-        // First scroll: arm it, stay put
-        edgeArmedRef.current = 'end'
-        e.preventDefault()
-        return
-      }
-      if (!down && atStart) {
-        if (edgeArmedRef.current === 'start') {
-          snapEdge('top')
-          edgeArmedRef.current = null
-          return
-        }
-        edgeArmedRef.current = 'start'
-        e.preventDefault()
-        return
-      }
-
-      // Reset arm when scrolling inward
-      edgeArmedRef.current = null
-
-      e.preventDefault()
-
-      if (cooldownRef.current) return
-
-      const now = Date.now()
-      // Reset accumulator if the user paused scrolling
-      if (now - lastWheelTs.current > 400) wheelAccum.current = 0
-      lastWheelTs.current = now
-
-      // Clamp per-tick delta to avoid trackpad bursts
-      const clamped = Math.max(-60, Math.min(60, e.deltaY))
-      wheelAccum.current += clamped
-
-      const THRESHOLD = 100
-      if (wheelAccum.current >  THRESHOLD) { wheelAccum.current = 0; goNext() }
-      if (wheelAccum.current < -THRESHOLD) { wheelAccum.current = 0; goPrev() }
-    }
-
-    const setTouchLock = (locked) => {
-      sectionRef.current?.classList.toggle('proj-touch-lock', locked)
-    }
-
-    // ── Touch ─────────────────────────────────────────────────────────────
-    const onTouchStart = (e) => {
-      touchStartY.current   = e.touches[0].clientY
-      touchStartX.current   = e.touches[0].clientX
-      touchConsumed.current = false
-      touchExiting.current  = false
-
-      // Lock vertical scroll if we're stuck and mid-section
-      if (isStuck()) {
-        const atEnd   = activeRef.current === PROJECTS.length - 1
-        const atStart = activeRef.current === 0
-        // Only lock if there's somewhere to go inside the section
-        const willLock = !((atEnd) || (atStart))
-        setTouchLock(willLock)
-      }
-    }
-
-    const onTouchMove = (e) => {
-      if (!isStuck()) {
-        setTouchLock(false)
-        return
-      }
-
-      const dy = touchStartY.current - e.touches[0].clientY
-      const dx = touchStartX.current - e.touches[0].clientX
-
-      if (Math.abs(dx) > Math.abs(dy) + 5) return
-
-      const atEnd   = activeRef.current === PROJECTS.length - 1
-      const atStart = activeRef.current === 0
-
-      if (dy > 0 && atEnd) {
-        setTouchLock(false)
-        if (!touchExiting.current && dy > 30) {
-          touchExiting.current = true
-          snapEdge('bottom')
-        }
-        return
-      }
-      if (dy < 0 && atStart) {
-        setTouchLock(false)
-        if (!touchExiting.current && dy < -30) {
-          touchExiting.current = true
-          snapEdge('top')
-        }
-        return
-      }
-
-      if (touchExiting.current) return
-
-      // Mid-section — we have touch-action:pan-x so preventDefault works
-      e.preventDefault()
-      setTouchLock(true)
-
-      if (touchConsumed.current || cooldownRef.current) return
-
-      const THRESHOLD = 45
-      if (dy >  THRESHOLD) { touchConsumed.current = true; goNext() }
-      if (dy < -THRESHOLD) { touchConsumed.current = true; goPrev() }
-    }
-
-    const onTouchEnd = () => {
-      // Re-evaluate lock state after finger lifts
-      if (!isStuck()) {
-        setTouchLock(false)
-        return
-      }
-      const atEnd   = activeRef.current === PROJECTS.length - 1
-      const atStart = activeRef.current === 0
-      setTouchLock(!atEnd && !atStart)
-    }
-
-    const el = sectionRef.current
-
-    window.addEventListener('wheel',      handleWheel,  { passive: false })
-    el?.addEventListener('touchstart', onTouchStart, { passive: true  })
-    el?.addEventListener('touchmove',  onTouchMove,  { passive: false })
-    el?.addEventListener('touchend',   onTouchEnd,   { passive: true  })
-
-    return () => {
-      window.removeEventListener('wheel',     handleWheel)
-      el?.removeEventListener('touchstart',  onTouchStart)
-      el?.removeEventListener('touchmove',   onTouchMove)
-      el?.removeEventListener('touchend',    onTouchEnd)
-    }
-  }, [])
-
   const proj = PROJECTS[visible]
 
   return (
-    <div
-      ref={sectionRef}
-      className='proj-scroll-wrapper'
-      style={{ height: `${PROJECTS.length * 100}vh` }}
-    >
-      <div className='proj-sticky'>
-        <div className='proj-outer'>
+    <div className='proj-outer'>
+      <div className='proj-card-wrap'>
 
-          <div className={`proj-number ${fading ? 'proj-fade-out' : 'proj-fade-in'}`}>
-            {proj.index}
+        <div className={`proj-number ${fading ? 'proj-fade-out' : 'proj-fade-in'}`}>
+          {proj.index}
+        </div>
+
+        <div className='proj-card'>
+          <div className='proj-progress-track'>
+            <div
+              className='proj-progress-fill'
+              style={{ height: `${progress * 100}%` }}
+            />
+            {PROJECTS.map((_, i) => (
+              <div
+                key={i}
+                className='proj-progress-marker'
+                style={{ top: `${(i / (PROJECTS.length - 1)) * 100}%` }}
+              >
+                <div className={`proj-progress-marker-dot ${i <= active ? 'proj-progress-marker-dot--active' : ''}`} />
+              </div>
+            ))}
           </div>
 
-          <div className='proj-card'>
-            <div className='proj-progress-track'>
-              <div
-                className='proj-progress-fill'
-                style={{ height: `${progress * 100}%` }}
-              />
-              {PROJECTS.map((_, i) => (
-                <div
-                  key={i}
-                  className='proj-progress-marker'
-                  style={{ top: `${(i / (PROJECTS.length - 1)) * 100}%` }}
+          <div className='proj-left'>
+            <div className={`proj-meta ${fading ? 'proj-fade-out' : 'proj-fade-in'}`}>
+              <span className='proj-step'>{proj.step}</span>
+              <span className='proj-tag'>{proj.tag}</span>
+            </div>
+
+            <h2 className={`proj-title ${fading ? 'proj-fade-out' : 'proj-fade-in'}`}>
+              {proj.title}
+            </h2>
+
+            <p className={`proj-desc ${fading ? 'proj-fade-out' : 'proj-fade-in'}`}>
+              {proj.description}
+            </p>
+
+            <div className='proj-bottom'>
+              <a href={proj.url} className='proj-cta' target='_blank' rel='noreferrer'>
+                View Project
+                <svg width='14' height='14' viewBox='0 0 24 24' fill='none'>
+                  <path d='M7 17L17 7M17 7H7M17 7v10' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/>
+                </svg>
+              </a>
+
+              <div className='proj-nav'>
+                <button
+                  className={`proj-nav-btn${active === 0 ? ' proj-nav-btn--disabled' : ' proj-nav-btn--pulse'}`}
+                  onClick={goPrev}
+                  disabled={active === 0}
                 >
-                  <div className={`proj-progress-marker-dot ${i <= active ? 'proj-progress-marker-dot--active' : ''}`} />
-                </div>
+                  <svg width='16' height='16' viewBox='0 0 24 24' fill='none'>
+                    <path d='M19 12H5M11 6l-6 6 6 6' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/>
+                  </svg>
+                </button>
+                <button
+                  className={`proj-nav-btn${active === PROJECTS.length - 1 ? ' proj-nav-btn--disabled' : ' proj-nav-btn--pulse'}`}
+                  onClick={goNext}
+                  disabled={active === PROJECTS.length - 1}
+                >
+                  <svg width='16' height='16' viewBox='0 0 24 24' fill='none'>
+                    <path d='M5 12h14M13 6l6 6-6 6' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className='proj-dots'>
+              {PROJECTS.map((_, i) => (
+                <button
+                  key={i}
+                  className={`proj-dot ${i === active ? 'proj-dot--active' : ''}`}
+                  onClick={() => goTo(i)}
+                />
               ))}
             </div>
+          </div>
 
-            <div className='proj-left'>
-              <div className={`proj-meta ${fading ? 'proj-fade-out' : 'proj-fade-in'}`}>
-                <span className='proj-step'>{proj.step}</span>
-                <span className='proj-tag'>{proj.tag}</span>
-              </div>
+          <div className='proj-divider' />
 
-              <h2 className={`proj-title ${fading ? 'proj-fade-out' : 'proj-fade-in'}`}>
-                {proj.title}
-              </h2>
-
-              <p className={`proj-desc ${fading ? 'proj-fade-out' : 'proj-fade-in'}`}>
-                {proj.description}
-              </p>
-
-              <div className='proj-bottom'>
-                <a href={proj.url} className='proj-cta' target='_blank' rel='noreferrer'>
-                  View Project
-                  <svg width='14' height='14' viewBox='0 0 24 24' fill='none'>
-                    <path d='M7 17L17 7M17 7H7M17 7v10' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/>
-                  </svg>
-                </a>
-                <div className='proj-nav'>
-                  <button className='proj-nav-btn' onClick={goPrev} disabled={active === 0}>
-                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none'>
-                      <path d='M19 12H5M11 6l-6 6 6 6' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/>
-                    </svg>
-                  </button>
-                  <button className='proj-nav-btn' onClick={goNext} disabled={active === PROJECTS.length - 1}>
-                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none'>
-                      <path d='M5 12h14M13 6l6 6-6 6' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/>
-                    </svg>
-                  </button>
+          <div className='proj-right'>
+            <div className={`proj-preview ${fading ? 'proj-fade-out' : 'proj-fade-in'}`}>
+              <GradientCanvas colors={proj.colors} />
+              <div className='proj-mock'>
+                <div className='proj-mock-bar'>
+                  <span className='proj-mock-dot proj-mock-dot--red'   />
+                  <span className='proj-mock-dot proj-mock-dot--yellow'/>
+                  <span className='proj-mock-dot proj-mock-dot--green' />
+                  <span className='proj-mock-url'>{proj.title.toLowerCase().replace(' ', '') + '.io'}</span>
                 </div>
-              </div>
-
-              <div className='proj-dots'>
-                {PROJECTS.map((_, i) => (
-                  <button
-                    key={i}
-                    className={`proj-dot ${i === active ? 'proj-dot--active' : ''}`}
-                    onClick={() => goTo(i)}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className='proj-divider' />
-
-            <div className='proj-right'>
-              <div className={`proj-preview ${fading ? 'proj-fade-out' : 'proj-fade-in'}`}>
-                <GradientCanvas colors={proj.colors} />
-                <div className='proj-mock'>
-                  <div className='proj-mock-bar'>
-                    <span className='proj-mock-dot proj-mock-dot--red'   />
-                    <span className='proj-mock-dot proj-mock-dot--yellow'/>
-                    <span className='proj-mock-dot proj-mock-dot--green' />
-                    <span className='proj-mock-url'>{proj.title.toLowerCase().replace(' ', '') + '.io'}</span>
+                <div className='proj-mock-body'>
+                  <div className='proj-mock-hero' />
+                  <div className='proj-mock-lines'>
+                    <div className='proj-mock-line proj-mock-line--70' />
+                    <div className='proj-mock-line proj-mock-line--45' />
                   </div>
-                  <div className='proj-mock-body'>
-                    <div className='proj-mock-hero' />
-                    <div className='proj-mock-lines'>
-                      <div className='proj-mock-line proj-mock-line--70' />
-                      <div className='proj-mock-line proj-mock-line--45' />
-                    </div>
-                    <div className='proj-mock-cards'>
-                      <div className='proj-mock-card' />
-                      <div className='proj-mock-card' />
-                      <div className='proj-mock-card' />
-                    </div>
+                  <div className='proj-mock-cards'>
+                    <div className='proj-mock-card' />
+                    <div className='proj-mock-card' />
+                    <div className='proj-mock-card' />
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
-          {active < PROJECTS.length - 1 && (
-            <div className='proj-hint'>
-              <span>scroll for next</span>
-              <svg width='12' height='12' viewBox='0 0 24 24' fill='none'>
-                <path d='M12 5v14M6 15l6 6 6-6' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/>
-              </svg>
-            </div>
-          )}
-
         </div>
+
       </div>
     </div>
   )
