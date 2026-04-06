@@ -63,17 +63,20 @@ function Main() {
     }
 
     let lastX = 0, lastY = 0
-    const handleMouseMove = (e) => {
-      const dx = e.clientX - lastX
-      const dy = e.clientY - lastY
-      const dist = Math.sqrt(dx * dx + dy * dy)
-      if (dist > 12) {
-        spawnRipple(e.clientX, e.clientY)
-        lastX = e.clientX
-        lastY = e.clientY
-      }
-    }
-    window.addEventListener('mousemove', handleMouseMove)
+    const isMobile = window.innerWidth <= 768
+
+const handleMouseMove = (e) => {
+  if (isMobile) return
+  const dx = e.clientX - lastX
+  const dy = e.clientY - lastY
+  const dist = Math.sqrt(dx * dx + dy * dy)
+  if (dist > 12) {
+    spawnRipple(e.clientX, e.clientY)
+    lastX = e.clientX
+    lastY = e.clientY
+  }
+}
+window.addEventListener('mousemove', handleMouseMove)
 
     const draw = () => {
       ctx.clearRect(0, 0, W, H)
