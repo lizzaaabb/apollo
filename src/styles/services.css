@@ -117,7 +117,8 @@
   color: rgba(255, 255, 255, 0.82);
   line-height: 1.6;
   margin: 0;
-  max-width: 300px;
+  max-width: 360px;
+  height: 300px;
 }
 
 /* ── Tablet ── */
@@ -168,6 +169,10 @@
 
   .service-card {
     padding: 24px 18px;
+  }
+  .service-card-description {
+    font-size: 0.9rem;
+    height: auto;
   }
 }
 
