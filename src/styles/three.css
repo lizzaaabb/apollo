@@ -3,31 +3,33 @@
    the entire sphere without touching the shader
 ───────────────────────────────────────────────*/
 :root {
-  /* Inner liquid colors — dark → bright → flare */
- --sph-deep:     #050112;   /* near-black, almost void    */
---sph-mid:      #0d0435;   /* very dark navy-indigo      */
---sph-bright:   #2a0d8f;   /* deep electric indigo       */
---sph-lavender: #5a1fd4;   /* rich violet                */
---sph-flare:    #7b35ff;   /* bright violet              */
---sph-frost:    #c9a8ff;   /* pale lavender frost peak   */
---sph-rim-a:    #1a00aa;   /* deep indigo rim            */
---sph-rim-b:    #8f5fff;   /* violet rim                 */  /* soft violet-lilac rim      */
+  --sph-deep:     #5d46a7;
+  --sph-mid:      #483794;
+  --sph-bright:   #4226a5;
+  --sph-lavender: #5a1fd4;
+  --sph-flare:    #7b35ff;
+  --sph-frost:    #c9a8ff;
+  --sph-rim-a:    #50439c;
+  --sph-rim-b:    #8f5fff;
 }
 
-/* ── Page background ── */
-.three-bg-gradient {
+/* ── Page background — hidden on mobile ── */
+.threeBgGradient {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-
-  /* Rich dark — much darker than the sphere so it pops */
-  background:
-    radial-gradient(ellipse at 55% 35%, #3b1470 0%, #200a50 35%, #0e0428 65%, #060115 100%);
+  background: radial-gradient(
+    ellipse at 60% 40%,
+    #7c5cbf 0%,
+    #5a3d9a 30%,
+    #3a2570 55%,
+    #1a0f3a 100%
+  );
 }
 
 /* ── WebGL canvas mount ── */
-.three-bg-canvas {
+.threeBgCanvas {
   position: fixed;
   inset: 0;
   z-index: 1;
@@ -37,12 +39,8 @@
   justify-content: center;
 }
 
-/* ─────────────────────────────────────────────
-   Post-processing filter on the canvas element
-   — gives the sphere that "liquid glass" depth
-   without any extra render passes
-───────────────────────────────────────────────*/
-.three-bg-canvas canvas {
+/* ── Post-processing filter ── */
+.threeBgCanvas canvas {
   filter:
     saturate(1.35)
     contrast(1.12)

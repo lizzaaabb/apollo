@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef } from 'react'
+import '../styles/three.css'
 
 export default function ThreeBackground() {
   const canvasRef = useRef(null)
@@ -15,6 +16,8 @@ export default function ThreeBackground() {
     const isLowEndAndroid = /Android/i.test(ua) && !/Chrome\/[89][0-9]|Chrome\/[1-9][0-9]{2}/i.test(ua)
     const isIOS = /iPhone|iPad|iPod/i.test(ua)
     const isMobile = isLowEndAndroid || isIOS
+
+    if (isMobile) return
 
     const checkGPUCapability = () => {
       try {
@@ -53,14 +56,12 @@ export default function ThreeBackground() {
         powerPreference: 'high-performance',
       })
 
-      renderer.setPixelRatio(
-        isLowEndAndroid ? 1 : Math.min(window.devicePixelRatio, isIOS ? 3 : 2)
-      )
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
       renderer.setClearColor(0x000000, 0)
       renderer.shadowMap.enabled = false
       renderer.outputColorSpace = THREE.SRGBColorSpace
-      renderer.toneMapping = isMobile ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
-      renderer.toneMappingExposure = 1.5
+      renderer.toneMapping = THREE.ACESFilmicToneMapping
+      renderer.toneMappingExposure = 1.3
 
       const scene = new THREE.Scene()
       const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 1000)
@@ -76,35 +77,33 @@ export default function ThreeBackground() {
       const ro = new ResizeObserver(resize)
       ro.observe(canvas)
 
-      const ambient = new THREE.AmbientLight(0xc9a8ff, isMobile ? 1.2 : 0.8)
+      const ambient = new THREE.AmbientLight(0xc9a8ff, 0.8)
       scene.add(ambient)
 
-      const dirLight = new THREE.DirectionalLight(0x7b35ff, isLowEndAndroid ? 5 : 9)
+      const dirLight = new THREE.DirectionalLight(0x7b35ff, 7)
       dirLight.position.set(5, 3, 5)
       scene.add(dirLight)
 
-      if (!isLowEndAndroid) {
-        const rimLight = new THREE.DirectionalLight(0x9d4fff, 8)
-        rimLight.position.set(-5, 0, -3)
-        scene.add(rimLight)
+      const rimLight = new THREE.DirectionalLight(0x9d4fff, 8)
+      rimLight.position.set(-5, 0, -3)
+      scene.add(rimLight)
 
-        const fillLight = new THREE.DirectionalLight(0x5a1fd4, 5)
-        fillLight.position.set(0, -5, 2)
-        scene.add(fillLight)
+      const fillLight = new THREE.DirectionalLight(0x5a1fd4, 5)
+      fillLight.position.set(0, -5, 2)
+      scene.add(fillLight)
 
-        const backLight = new THREE.DirectionalLight(0x1a00aa, 4)
-        backLight.position.set(0, 6, -4)
-        scene.add(backLight)
-      }
+      const backLight = new THREE.DirectionalLight(0x1a00aa, 4)
+      backLight.position.set(0, 6, -4)
+      scene.add(backLight)
 
       let targetScale = 1.0
       let currentScale = 1.0
 
       const handleScroll = () => {
-  const docHeight = document.body.scrollHeight - window.innerHeight
-  const ratio = docHeight > 0 ? window.scrollY / docHeight : 0
-  targetScale = 1.0 + ratio * 2.0
-}
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight
+        const ratio = docHeight > 0 ? window.scrollY / docHeight : 0
+        targetScale = 1.0 + ratio * 2.0
+      }
       window.addEventListener('scroll', handleScroll, { passive: true })
 
       class SpecularGlossinessPlugin {
@@ -142,22 +141,8 @@ export default function ThreeBackground() {
 
           model.traverse((child) => {
             if (child.isMesh && child.material) {
-              const old = child.material
-              if (isLowEndAndroid) {
-                child.material = new THREE.MeshLambertMaterial({
-                  color: old.color ?? new THREE.Color(0x7a2fd4),
-                  map: old.map ?? null,
-                  normalMap: old.normalMap ?? null,
-                  emissiveMap: old.emissiveMap ?? null,
-                  emissive: old.emissive ?? new THREE.Color(0x000000),
-                  transparent: old.transparent ?? false,
-                  opacity: old.opacity ?? 1,
-                })
-                requestAnimationFrame(() => old.dispose())
-              } else {
-                child.material.color.set(0x7a2fd4)
-                child.material.needsUpdate = true
-              }
+              child.material.color.set(0x8844d8)
+              child.material.needsUpdate = true
             }
           })
 
@@ -187,7 +172,6 @@ export default function ThreeBackground() {
             const safeDelta = Math.min(rawDelta, 0.05)
             tick._last = now
 
-            // Don't count paused time (iOS scroll momentum suspension) in grow-in
             if (rawDelta > 0.5) { startTime += rawDelta * 1000 }
 
             const growP = Math.min((now - startTime) / 1500, 1)
@@ -227,24 +211,10 @@ export default function ThreeBackground() {
 
   return (
     <>
-      <div style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 0,
-        pointerEvents: 'none',
-        background: 'radial-gradient(ellipse at 60% 40%, #7c5cbf 0%, #5a3d9a 30%, #3a2570 55%, #1a0f3a 100%)',
-      }} />
-      <canvas
-        ref={canvasRef}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 1,
-          width: '100%',
-          height: '100%',
-          pointerEvents: 'none',
-        }}
-      />
+      <div className="threeBgGradient" />
+      <div className="threeBgCanvas">
+        <canvas ref={canvasRef} style={{ width: '100%', height: '100%' }} />
+      </div>
     </>
   )
 }
