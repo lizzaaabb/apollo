@@ -11,9 +11,39 @@ export default function ThreeBackground() {
     let raf
     let renderer
 
-    const isLowEndAndroid = /Android/i.test(navigator.userAgent)
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+    const ua = navigator.userAgent
+    const isLowEndAndroid = /Android/i.test(ua) && !/Chrome\/[89][0-9]|Chrome\/[1-9][0-9]{2}/i.test(ua)
+    const isIOS = /iPhone|iPad|iPod/i.test(ua)
     const isMobile = isLowEndAndroid || isIOS
+
+    // ✅ GPU capability check — hide model on very weak devices
+    const checkGPUCapability = () => {
+      try {
+        const testCanvas = document.createElement('canvas')
+        const gl = testCanvas.getContext('webgl2') || testCanvas.getContext('webgl')
+        if (!gl) return false
+
+        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info')
+        if (debugInfo) {
+          const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+          // Block known very weak GPUs
+          if (/SwiftShader|llvmpipe|software/i.test(renderer)) return false
+        }
+
+        // Check max texture size as proxy for GPU capability
+        const maxTexture = gl.getParameter(gl.MAX_TEXTURE_SIZE)
+        if (maxTexture < 2048) return false
+
+        return true
+      } catch {
+        return false
+      }
+    }
+
+    if (!checkGPUCapability()) {
+      // Just show the gradient background, skip the 3D model entirely
+      return
+    }
 
     const handleContextLost = (e) => {
       e.preventDefault()
@@ -28,18 +58,21 @@ export default function ThreeBackground() {
       renderer = new THREE.WebGLRenderer({
         canvas,
         alpha: true,
-        antialias: !isLowEndAndroid,   // safe on iOS + desktop, risky on Android
+        antialias: true, // ✅ Enable for all — iOS handles it fine, performance impact is minimal
         powerPreference: 'high-performance',
       })
 
+      // ✅ KEY FIX: Use full devicePixelRatio on iOS for HD (iPhone 15 has DPR 3)
+      // Cap at 3 overall to avoid absurd memory use on future devices
       renderer.setPixelRatio(
         isLowEndAndroid
           ? 1
-          : Math.min(window.devicePixelRatio, 2)
+          : Math.min(window.devicePixelRatio, isIOS ? 3 : 2)
       )
+
       renderer.setClearColor(0x000000, 0)
       renderer.shadowMap.enabled = false
-      renderer.outputColorSpace = THREE.SRGBColorSpace  // always — fixes dark colors on iOS
+      renderer.outputColorSpace = THREE.SRGBColorSpace
       renderer.toneMapping = isMobile
         ? THREE.NoToneMapping
         : THREE.ACESFilmicToneMapping
@@ -93,39 +126,20 @@ export default function ThreeBackground() {
           this.parser = parser
           this.name = 'KHR_materials_pbrSpecularGlossiness'
         }
-
-        getMaterialType() {
-          return THREE.MeshStandardMaterial
-        }
-
+        getMaterialType() { return THREE.MeshStandardMaterial }
         async extendMaterialParams(materialIndex, materialParams) {
           const parser = this.parser
           const materialDef = parser.json.materials?.[materialIndex]
           if (!materialDef?.extensions?.[this.name]) return
-
           const sg = materialDef.extensions[this.name]
           const pending = []
-
-          if (sg.diffuseTexture !== undefined) {
-            pending.push(
-              parser.assignTexture(materialParams, 'map', sg.diffuseTexture)
-            )
-          }
-
+          if (sg.diffuseTexture !== undefined)
+            pending.push(parser.assignTexture(materialParams, 'map', sg.diffuseTexture))
           materialParams.color = new THREE.Color(0x7a2fd4)
-
-          if (sg.specularGlossinessTexture !== undefined) {
-            pending.push(
-              parser.assignTexture(materialParams, 'roughnessMap', sg.specularGlossinessTexture)
-            )
-          }
-
-          materialParams.roughness = sg.glossinessFactor !== undefined
-            ? 1.0 - sg.glossinessFactor
-            : 1.0
-
+          if (sg.specularGlossinessTexture !== undefined)
+            pending.push(parser.assignTexture(materialParams, 'roughnessMap', sg.specularGlossinessTexture))
+          materialParams.roughness = sg.glossinessFactor !== undefined ? 1.0 - sg.glossinessFactor : 1.0
           materialParams.metalness = 0.0
-
           await Promise.all(pending)
         }
       }
@@ -137,13 +151,10 @@ export default function ThreeBackground() {
         '/venus.glb',
         (gltf) => {
           const model = gltf.scene
-
           model.traverse((child) => {
             if (child.isMesh && child.material) {
               const old = child.material
-
               if (isLowEndAndroid) {
-                // Lambert only for weak Android GPUs — skips PBR shader
                 child.material = new THREE.MeshLambertMaterial({
                   color: old.color ?? new THREE.Color(0x7a2fd4),
                   map: old.map ?? null,
@@ -155,7 +166,6 @@ export default function ThreeBackground() {
                 })
                 requestAnimationFrame(() => old.dispose())
               } else {
-                // iOS + desktop: full PBR, keep all textures
                 child.material.color.set(0x7a2fd4)
                 child.material.needsUpdate = true
               }
@@ -194,12 +204,10 @@ export default function ThreeBackground() {
             const now = performance.now()
             const safeDelta = Math.min((now - last) / 1000, 0.1)
             last = now
-
             currentScale += (targetScale - currentScale) * 0.05
             pivot.scale.setScalar(currentScale)
             pivot.rotation.y += safeDelta * 0.05
             pivot.rotation.x += safeDelta * 0.02
-
             renderer.render(scene, camera)
           }
           tick()
