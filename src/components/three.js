@@ -97,12 +97,13 @@ export default function ThreeBackground() {
         scene.add(backLight)
       }
 
-      // Scroll: ball shrinks as user scrolls past hero
       let targetScale = 1.0
       let currentScale = 1.0
+
       const handleScroll = () => {
   const docHeight = document.body.scrollHeight - window.innerHeight
-  targetScale = 1.0 + (docHeight > 0 ? window.scrollY / docHeight : 0) * 2
+  const ratio = docHeight > 0 ? window.scrollY / docHeight : 0
+  targetScale = 1.0 + ratio * 2.0
 }
       window.addEventListener('scroll', handleScroll, { passive: true })
 
@@ -176,23 +177,25 @@ export default function ThreeBackground() {
           camera.far = maxDim * 20
           camera.updateProjectionMatrix()
 
-          // Single unified tick — grow-in + scroll scale, no race condition
           let startTime = null
 
           const tick = (now) => {
             raf = requestAnimationFrame(tick)
             if (!startTime) startTime = now
 
-            const safeDelta = Math.min((now - (tick._last ?? now)) / 1000, 0.1)
+            const rawDelta = (now - (tick._last ?? now)) / 1000
+            const safeDelta = Math.min(rawDelta, 0.05)
             tick._last = now
 
-            // Grow-in easing over 1.5s
+            // Don't count paused time (iOS scroll momentum suspension) in grow-in
+            if (rawDelta > 0.5) { startTime += rawDelta * 1000 }
+
             const growP = Math.min((now - startTime) / 1500, 1)
             const growScale = growP === 1 ? 1 : 1 - Math.pow(2, -10 * growP)
 
-            // Smooth scroll scale
-            currentScale += (targetScale - currentScale) * 0.05
-            pivot.scale.setScalar(growScale * currentScale)
+            currentScale += (targetScale - currentScale) * 0.12
+            const finalScale = Math.max(growScale * currentScale, 0.15)
+            pivot.scale.setScalar(finalScale)
 
             pivot.rotation.y += safeDelta * 0.05
             pivot.rotation.x += safeDelta * 0.02
