@@ -16,34 +16,25 @@ export default function ThreeBackground() {
     const isIOS = /iPhone|iPad|iPod/i.test(ua)
     const isMobile = isLowEndAndroid || isIOS
 
-    // ✅ GPU capability check — hide model on very weak devices
     const checkGPUCapability = () => {
       try {
         const testCanvas = document.createElement('canvas')
         const gl = testCanvas.getContext('webgl2') || testCanvas.getContext('webgl')
         if (!gl) return false
-
         const debugInfo = gl.getExtension('WEBGL_debug_renderer_info')
         if (debugInfo) {
-          const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
-          // Block known very weak GPUs
-          if (/SwiftShader|llvmpipe|software/i.test(renderer)) return false
+          const rendererStr = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+          if (/SwiftShader|llvmpipe|software/i.test(rendererStr)) return false
         }
-
-        // Check max texture size as proxy for GPU capability
         const maxTexture = gl.getParameter(gl.MAX_TEXTURE_SIZE)
         if (maxTexture < 2048) return false
-
         return true
       } catch {
         return false
       }
     }
 
-    if (!checkGPUCapability()) {
-      // Just show the gradient background, skip the 3D model entirely
-      return
-    }
+    if (!checkGPUCapability()) return
 
     const handleContextLost = (e) => {
       e.preventDefault()
@@ -58,24 +49,17 @@ export default function ThreeBackground() {
       renderer = new THREE.WebGLRenderer({
         canvas,
         alpha: true,
-        antialias: true, // ✅ Enable for all — iOS handles it fine, performance impact is minimal
+        antialias: true,
         powerPreference: 'high-performance',
       })
 
-      // ✅ KEY FIX: Use full devicePixelRatio on iOS for HD (iPhone 15 has DPR 3)
-      // Cap at 3 overall to avoid absurd memory use on future devices
       renderer.setPixelRatio(
-        isLowEndAndroid
-          ? 1
-          : Math.min(window.devicePixelRatio, isIOS ? 3 : 2)
+        isLowEndAndroid ? 1 : Math.min(window.devicePixelRatio, isIOS ? 3 : 2)
       )
-
       renderer.setClearColor(0x000000, 0)
       renderer.shadowMap.enabled = false
       renderer.outputColorSpace = THREE.SRGBColorSpace
-      renderer.toneMapping = isMobile
-        ? THREE.NoToneMapping
-        : THREE.ACESFilmicToneMapping
+      renderer.toneMapping = isMobile ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
       renderer.toneMappingExposure = 1.5
 
       const scene = new THREE.Scene()
@@ -113,12 +97,13 @@ export default function ThreeBackground() {
         scene.add(backLight)
       }
 
+      // Scroll: ball shrinks as user scrolls past hero
       let targetScale = 1.0
       let currentScale = 1.0
       const handleScroll = () => {
-        const docHeight = document.body.scrollHeight - window.innerHeight
-        targetScale = 1.0 + (docHeight > 0 ? window.scrollY / docHeight : 0) * 2
-      }
+  const docHeight = document.body.scrollHeight - window.innerHeight
+  targetScale = 1.0 + (docHeight > 0 ? window.scrollY / docHeight : 0) * 2
+}
       window.addEventListener('scroll', handleScroll, { passive: true })
 
       class SpecularGlossinessPlugin {
@@ -126,7 +111,9 @@ export default function ThreeBackground() {
           this.parser = parser
           this.name = 'KHR_materials_pbrSpecularGlossiness'
         }
-        getMaterialType() { return THREE.MeshStandardMaterial }
+        getMaterialType() {
+          return THREE.MeshStandardMaterial
+        }
         async extendMaterialParams(materialIndex, materialParams) {
           const parser = this.parser
           const materialDef = parser.json.materials?.[materialIndex]
@@ -151,6 +138,7 @@ export default function ThreeBackground() {
         '/venus.glb',
         (gltf) => {
           const model = gltf.scene
+
           model.traverse((child) => {
             if (child.isMesh && child.material) {
               const old = child.material
@@ -188,29 +176,30 @@ export default function ThreeBackground() {
           camera.far = maxDim * 20
           camera.updateProjectionMatrix()
 
-          pivot.scale.setScalar(0)
-          const t0 = performance.now()
-          const grow = (now) => {
-            const p = Math.min((now - t0) / 1500, 1)
-            const e = p === 1 ? 1 : 1 - Math.pow(2, -10 * p)
-            pivot.scale.setScalar(e)
-            if (p < 1) requestAnimationFrame(grow)
-          }
-          requestAnimationFrame(grow)
+          // Single unified tick — grow-in + scroll scale, no race condition
+          let startTime = null
 
-          let last = performance.now()
-          const tick = () => {
+          const tick = (now) => {
             raf = requestAnimationFrame(tick)
-            const now = performance.now()
-            const safeDelta = Math.min((now - last) / 1000, 0.1)
-            last = now
+            if (!startTime) startTime = now
+
+            const safeDelta = Math.min((now - (tick._last ?? now)) / 1000, 0.1)
+            tick._last = now
+
+            // Grow-in easing over 1.5s
+            const growP = Math.min((now - startTime) / 1500, 1)
+            const growScale = growP === 1 ? 1 : 1 - Math.pow(2, -10 * growP)
+
+            // Smooth scroll scale
             currentScale += (targetScale - currentScale) * 0.05
-            pivot.scale.setScalar(currentScale)
+            pivot.scale.setScalar(growScale * currentScale)
+
             pivot.rotation.y += safeDelta * 0.05
             pivot.rotation.x += safeDelta * 0.02
+
             renderer.render(scene, camera)
           }
-          tick()
+          requestAnimationFrame(tick)
         },
         null,
         (err) => console.error('[Venus] load error:', err)

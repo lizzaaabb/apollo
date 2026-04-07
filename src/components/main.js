@@ -65,18 +65,18 @@ function Main() {
     let lastX = 0, lastY = 0
     const isMobile = window.innerWidth <= 768
 
-const handleMouseMove = (e) => {
-  if (isMobile) return
-  const dx = e.clientX - lastX
-  const dy = e.clientY - lastY
-  const dist = Math.sqrt(dx * dx + dy * dy)
-  if (dist > 12) {
-    spawnRipple(e.clientX, e.clientY)
-    lastX = e.clientX
-    lastY = e.clientY
-  }
-}
-window.addEventListener('mousemove', handleMouseMove)
+    const handleMouseMove = (e) => {
+      if (isMobile) return
+      const dx = e.clientX - lastX
+      const dy = e.clientY - lastY
+      const dist = Math.sqrt(dx * dx + dy * dy)
+      if (dist > 12) {
+        spawnRipple(e.clientX, e.clientY)
+        lastX = e.clientX
+        lastY = e.clientY
+      }
+    }
+    window.addEventListener('mousemove', handleMouseMove)
 
     const draw = () => {
       ctx.clearRect(0, 0, W, H)
@@ -128,6 +128,10 @@ window.addEventListener('mousemove', handleMouseMove)
       <div
         ref={heroRef}
         style={{
+          position: 'sticky',
+          top: 0,
+          height: '100vh',
+          zIndex: 2,
           willChange: 'opacity, transform',
           transform: 'translateZ(0)',
           transition: 'none',
