@@ -11,7 +11,9 @@ export default function ThreeBackground() {
     let raf
     let renderer
 
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+    const isLowEndAndroid = /Android/i.test(navigator.userAgent)
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+    const isMobile = isLowEndAndroid || isIOS
 
     const handleContextLost = (e) => {
       e.preventDefault()
@@ -26,22 +28,22 @@ export default function ThreeBackground() {
       renderer = new THREE.WebGLRenderer({
         canvas,
         alpha: true,
-        antialias: !isMobile,
+        antialias: !isLowEndAndroid,   // safe on iOS + desktop, risky on Android
         powerPreference: 'high-performance',
       })
 
-      renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio, 2))
+      renderer.setPixelRatio(
+        isLowEndAndroid
+          ? 1
+          : Math.min(window.devicePixelRatio, 2)
+      )
       renderer.setClearColor(0x000000, 0)
       renderer.shadowMap.enabled = false
-
+      renderer.outputColorSpace = THREE.SRGBColorSpace  // always — fixes dark colors on iOS
       renderer.toneMapping = isMobile
         ? THREE.NoToneMapping
         : THREE.ACESFilmicToneMapping
       renderer.toneMappingExposure = 1.5
-
-      if (!isMobile) {
-        renderer.outputColorSpace = THREE.SRGBColorSpace
-      }
 
       const scene = new THREE.Scene()
       const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 1000)
@@ -60,11 +62,11 @@ export default function ThreeBackground() {
       const ambient = new THREE.AmbientLight(0xc9a8ff, isMobile ? 1.2 : 0.8)
       scene.add(ambient)
 
-      const dirLight = new THREE.DirectionalLight(0x7b35ff, isMobile ? 5 : 9)
+      const dirLight = new THREE.DirectionalLight(0x7b35ff, isLowEndAndroid ? 5 : 9)
       dirLight.position.set(5, 3, 5)
       scene.add(dirLight)
 
-      if (!isMobile) {
+      if (!isLowEndAndroid) {
         const rimLight = new THREE.DirectionalLight(0x9d4fff, 8)
         rimLight.position.set(-5, 0, -3)
         scene.add(rimLight)
@@ -140,8 +142,8 @@ export default function ThreeBackground() {
             if (child.isMesh && child.material) {
               const old = child.material
 
-              if (isMobile) {
-                // Lightweight Lambert — skips PBR shader, keeps textures
+              if (isLowEndAndroid) {
+                // Lambert only for weak Android GPUs — skips PBR shader
                 child.material = new THREE.MeshLambertMaterial({
                   color: old.color ?? new THREE.Color(0x7a2fd4),
                   map: old.map ?? null,
@@ -151,9 +153,9 @@ export default function ThreeBackground() {
                   transparent: old.transparent ?? false,
                   opacity: old.opacity ?? 1,
                 })
-                old.dispose()
+                requestAnimationFrame(() => old.dispose())
               } else {
-                // Desktop — keep full PBR material, just set color
+                // iOS + desktop: full PBR, keep all textures
                 child.material.color.set(0x7a2fd4)
                 child.material.needsUpdate = true
               }
