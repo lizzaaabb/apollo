@@ -11,22 +11,44 @@ export default function ThreeBackground() {
     let raf
     let renderer
 
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+
+    const handleContextLost = (e) => {
+      e.preventDefault()
+      cancelAnimationFrame(raf)
+    }
+    canvas.addEventListener('webglcontextlost', handleContextLost)
+
     const init = async () => {
       const THREE = await import('three')
       const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js')
 
-      renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true })
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+      renderer = new THREE.WebGLRenderer({
+        canvas,
+        alpha: true,
+        antialias: !isMobile,
+        powerPreference: 'high-performance',
+      })
+
+      renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio, 2))
       renderer.setClearColor(0x000000, 0)
-      renderer.outputColorSpace = THREE.SRGBColorSpace
-      renderer.toneMapping = THREE.ACESFilmicToneMapping
-      renderer.toneMappingExposure = 1.5  // slightly brighter overall
+      renderer.shadowMap.enabled = false
+
+      renderer.toneMapping = isMobile
+        ? THREE.NoToneMapping
+        : THREE.ACESFilmicToneMapping
+      renderer.toneMappingExposure = 1.5
+
+      if (!isMobile) {
+        renderer.outputColorSpace = THREE.SRGBColorSpace
+      }
 
       const scene = new THREE.Scene()
       const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 1000)
 
       const resize = () => {
-        const w = canvas.clientWidth, h = canvas.clientHeight
+        const w = canvas.clientWidth
+        const h = canvas.clientHeight
         renderer.setSize(w, h, false)
         camera.aspect = w / h
         camera.updateProjectionMatrix()
@@ -35,31 +57,29 @@ export default function ThreeBackground() {
       const ro = new ResizeObserver(resize)
       ro.observe(canvas)
 
-      // --sph-frost / --sph-flare: bright ambient so texture detail shows
-      const ambient = new THREE.AmbientLight(0xc9a8ff, 0.8)  // --sph-frost
+      const ambient = new THREE.AmbientLight(0xc9a8ff, isMobile ? 1.2 : 0.8)
       scene.add(ambient)
 
-      // Main key light: --sph-flare bright violet, strong enough to reveal texture
-      const dirLight = new THREE.DirectionalLight(0x7b35ff, 9)  // --sph-flare
+      const dirLight = new THREE.DirectionalLight(0x7b35ff, isMobile ? 5 : 9)
       dirLight.position.set(5, 3, 5)
       scene.add(dirLight)
 
-      // Rim light A: --sph-rim-b violet rim from opposite side
-      const rimLight = new THREE.DirectionalLight(0x9d4fff, 8)  // --sph-rim-b
-      rimLight.position.set(-5, 0, -3)
-      scene.add(rimLight)
+      if (!isMobile) {
+        const rimLight = new THREE.DirectionalLight(0x9d4fff, 8)
+        rimLight.position.set(-5, 0, -3)
+        scene.add(rimLight)
 
-      // Fill from below: --sph-lavender, lifts the shadow detail
-      const fillLight = new THREE.DirectionalLight(0x5a1fd4, 5)  // --sph-lavender
-      fillLight.position.set(0, -5, 2)
-      scene.add(fillLight)
+        const fillLight = new THREE.DirectionalLight(0x5a1fd4, 5)
+        fillLight.position.set(0, -5, 2)
+        scene.add(fillLight)
 
-      // Back/top light: --sph-rim-a deep indigo for subtle top edge
-      const backLight = new THREE.DirectionalLight(0x1a00aa, 4)  // --sph-rim-a
-      backLight.position.set(0, 6, -4)
-      scene.add(backLight)
+        const backLight = new THREE.DirectionalLight(0x1a00aa, 4)
+        backLight.position.set(0, 6, -4)
+        scene.add(backLight)
+      }
 
-      let targetScale = 1.0, currentScale = 1.0
+      let targetScale = 1.0
+      let currentScale = 1.0
       const handleScroll = () => {
         const docHeight = document.body.scrollHeight - window.innerHeight
         targetScale = 1.0 + (docHeight > 0 ? window.scrollY / docHeight : 0) * 2
@@ -82,7 +102,6 @@ export default function ThreeBackground() {
           if (!materialDef?.extensions?.[this.name]) return
 
           const sg = materialDef.extensions[this.name]
-
           const pending = []
 
           if (sg.diffuseTexture !== undefined) {
@@ -91,8 +110,7 @@ export default function ThreeBackground() {
             )
           }
 
-          // --sph-bright as base color: deep electric indigo, lets lights push it brighter
-          materialParams.color = new THREE.Color(0x7a2fd4)  // --sph-bright
+          materialParams.color = new THREE.Color(0x7a2fd4)
 
           if (sg.specularGlossinessTexture !== undefined) {
             pending.push(
@@ -116,20 +134,35 @@ export default function ThreeBackground() {
       loader.load(
         '/venus.glb',
         (gltf) => {
-          console.log('[Venus] ✅ GLB loaded')
           const model = gltf.scene
 
-          // --sph-bright base, lights will lift it into lavender/violet/flare range
           model.traverse((child) => {
             if (child.isMesh && child.material) {
-              child.material.color = new THREE.Color(0x7a2fd4)  // --sph-bright
-              child.material.needsUpdate = true
+              const old = child.material
+
+              if (isMobile) {
+                // Lightweight Lambert — skips PBR shader, keeps textures
+                child.material = new THREE.MeshLambertMaterial({
+                  color: old.color ?? new THREE.Color(0x7a2fd4),
+                  map: old.map ?? null,
+                  normalMap: old.normalMap ?? null,
+                  emissiveMap: old.emissiveMap ?? null,
+                  emissive: old.emissive ?? new THREE.Color(0x000000),
+                  transparent: old.transparent ?? false,
+                  opacity: old.opacity ?? 1,
+                })
+                old.dispose()
+              } else {
+                // Desktop — keep full PBR material, just set color
+                child.material.color.set(0x7a2fd4)
+                child.material.needsUpdate = true
+              }
             }
           })
 
-          const box    = new THREE.Box3().setFromObject(model)
+          const box = new THREE.Box3().setFromObject(model)
           const center = box.getCenter(new THREE.Vector3())
-          const size   = box.getSize(new THREE.Vector3())
+          const size = box.getSize(new THREE.Vector3())
           const maxDim = Math.max(size.x, size.y, size.z)
 
           const pivot = new THREE.Group()
@@ -140,7 +173,7 @@ export default function ThreeBackground() {
           camera.position.set(0, 0, maxDim * 2.8)
           camera.lookAt(0, 0, 0)
           camera.near = maxDim * 0.01
-          camera.far  = maxDim * 20
+          camera.far = maxDim * 20
           camera.updateProjectionMatrix()
 
           pivot.scale.setScalar(0)
@@ -157,10 +190,8 @@ export default function ThreeBackground() {
           const tick = () => {
             raf = requestAnimationFrame(tick)
             const now = performance.now()
-            const d = (now - last) / 1000
+            const safeDelta = Math.min((now - last) / 1000, 0.1)
             last = now
-
-            const safeDelta = Math.min(d, 0.1)
 
             currentScale += (targetScale - currentScale) * 0.05
             pivot.scale.setScalar(currentScale)
@@ -172,7 +203,7 @@ export default function ThreeBackground() {
           tick()
         },
         null,
-        (err) => console.error('[Venus] ❌ Load error:', err)
+        (err) => console.error('[Venus] load error:', err)
       )
 
       return () => {
@@ -182,10 +213,11 @@ export default function ThreeBackground() {
     }
 
     let cleanup
-    init().then(fn => { cleanup = fn })
+    init().then((fn) => { cleanup = fn })
 
     return () => {
       cancelAnimationFrame(raf)
+      canvas.removeEventListener('webglcontextlost', handleContextLost)
       renderer?.dispose()
       if (cleanup) cleanup()
     }
