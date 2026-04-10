@@ -17,20 +17,16 @@ export default function ThreeBackground() {
     const isAndroid = /Android/i.test(ua)
     const isMobile = isIOS || isAndroid
 
-    // Only skip truly software-rendered GPUs — allow mobile through
+    // Much more permissive — only block truly broken WebGL
     const checkGPUCapability = () => {
       try {
         const testCanvas = document.createElement('canvas')
         const gl = testCanvas.getContext('webgl2') || testCanvas.getContext('webgl')
         if (!gl) return false
-        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info')
-        if (debugInfo) {
-          const rendererStr = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
-          if (/SwiftShader|llvmpipe|software/i.test(rendererStr)) return false
-        }
-        // Keep texture check but lower bar for mobile GPUs
+        // Skip renderer string check entirely — it's blocked on most mobile browsers
+        // and causes false negatives. Just verify basic WebGL works.
         const maxTexture = gl.getParameter(gl.MAX_TEXTURE_SIZE)
-        if (maxTexture < 1024) return false
+        if (maxTexture < 512) return false
         return true
       } catch {
         return false
@@ -52,13 +48,15 @@ export default function ThreeBackground() {
       renderer = new THREE.WebGLRenderer({
         canvas,
         alpha: true,
-        // Lower cost on mobile: skip antialias
         antialias: !isMobile,
         powerPreference: isMobile ? 'low-power' : 'high-performance',
       })
 
-      // Cap pixel ratio lower on mobile to reduce fill-rate cost
-      renderer.setPixelRatio(isMobile ? Math.min(window.devicePixelRatio, 1.5) : Math.min(window.devicePixelRatio, 2))
+      renderer.setPixelRatio(
+        isMobile
+          ? Math.min(window.devicePixelRatio, 1.5)
+          : Math.min(window.devicePixelRatio, 2)
+      )
       renderer.setClearColor(0x000000, 0)
       renderer.shadowMap.enabled = false
       renderer.outputColorSpace = THREE.SRGBColorSpace
@@ -68,9 +66,14 @@ export default function ThreeBackground() {
       const scene = new THREE.Scene()
       const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 1000)
 
+      // ── Resize — use window size as fallback for mobile ──
+      const getSize = () => ({
+        w: canvas.clientWidth  || canvas.offsetWidth  || window.innerWidth,
+        h: canvas.clientHeight || canvas.offsetHeight || window.innerHeight,
+      })
+
       const resize = () => {
-        const w = canvas.clientWidth
-        const h = canvas.clientHeight
+        const { w, h } = getSize()
         renderer.setSize(w, h, false)
         camera.aspect = w / h
         camera.updateProjectionMatrix()
@@ -78,6 +81,8 @@ export default function ThreeBackground() {
       resize()
       const ro = new ResizeObserver(resize)
       ro.observe(canvas)
+      // Also listen to window resize as belt-and-suspenders on mobile
+      window.addEventListener('resize', resize, { passive: true })
 
       const ambient = new THREE.AmbientLight(0xc9a8ff, 0.8)
       scene.add(ambient)
@@ -108,33 +113,7 @@ export default function ThreeBackground() {
       }
       window.addEventListener('scroll', handleScroll, { passive: true })
 
-      class SpecularGlossinessPlugin {
-        constructor(parser) {
-          this.parser = parser
-          this.name = 'KHR_materials_pbrSpecularGlossiness'
-        }
-        getMaterialType() {
-          return THREE.MeshStandardMaterial
-        }
-        async extendMaterialParams(materialIndex, materialParams) {
-          const parser = this.parser
-          const materialDef = parser.json.materials?.[materialIndex]
-          if (!materialDef?.extensions?.[this.name]) return
-          const sg = materialDef.extensions[this.name]
-          const pending = []
-          if (sg.diffuseTexture !== undefined)
-            pending.push(parser.assignTexture(materialParams, 'map', sg.diffuseTexture))
-          materialParams.color = new THREE.Color(0x7a2fd4)
-          if (sg.specularGlossinessTexture !== undefined)
-            pending.push(parser.assignTexture(materialParams, 'roughnessMap', sg.specularGlossinessTexture))
-          materialParams.roughness = sg.glossinessFactor !== undefined ? 1.0 - sg.glossinessFactor : 1.0
-          materialParams.metalness = 0.0
-          await Promise.all(pending)
-        }
-      }
-
       const loader = new GLTFLoader()
-      loader.register(parser => new SpecularGlossinessPlugin(parser))
 
       loader.load(
         '/venus.glb',
@@ -143,6 +122,8 @@ export default function ThreeBackground() {
 
           model.traverse((child) => {
             if (child.isMesh && child.material) {
+              // Clone to avoid mutating cached material
+              child.material = child.material.clone()
               child.material.color.set(0x8844d8)
               child.material.needsUpdate = true
             }
@@ -164,22 +145,24 @@ export default function ThreeBackground() {
           camera.far = maxDim * 20
           camera.updateProjectionMatrix()
 
+          // Force a resize now that model is loaded and camera is set
+          resize()
+
           let startTime = null
-          // Slow down rotation slightly on mobile to ease GPU load
-          const rotSpeed = isMobile ? 0.03 : 0.05
+          const rotSpeed  = isMobile ? 0.03  : 0.05
           const rotSpeedX = isMobile ? 0.012 : 0.02
 
           const tick = (now) => {
             raf = requestAnimationFrame(tick)
             if (!startTime) startTime = now
 
-            const rawDelta = (now - (tick._last ?? now)) / 1000
+            const rawDelta  = (now - (tick._last ?? now)) / 1000
             const safeDelta = Math.min(rawDelta, 0.05)
             tick._last = now
 
-            if (rawDelta > 0.5) { startTime += rawDelta * 1000 }
+            if (rawDelta > 0.5) startTime += rawDelta * 1000
 
-            const growP = Math.min((now - startTime) / 1500, 1)
+            const growP     = Math.min((now - startTime) / 1500, 1)
             const growScale = growP === 1 ? 1 : 1 - Math.pow(2, -10 * growP)
 
             currentScale += (targetScale - currentScale) * 0.12
@@ -193,12 +176,13 @@ export default function ThreeBackground() {
           }
           requestAnimationFrame(tick)
         },
-        null,
+        undefined,
         (err) => console.error('[Venus] load error:', err)
       )
 
       return () => {
         window.removeEventListener('scroll', handleScroll)
+        window.removeEventListener('resize', resize)
         ro.disconnect()
       }
     }
@@ -218,7 +202,10 @@ export default function ThreeBackground() {
     <>
       <div className="threeBgGradient" />
       <div className="threeBgCanvas">
-        <canvas ref={canvasRef} style={{ width: '100%', height: '100%' }} />
+        <canvas
+          ref={canvasRef}
+          style={{ width: '100%', height: '100%', display: 'block' }}
+        />
       </div>
     </>
   )
