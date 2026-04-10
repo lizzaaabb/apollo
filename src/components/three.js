@@ -13,12 +13,11 @@ export default function ThreeBackground() {
     let renderer
 
     const ua = navigator.userAgent
-    const isLowEndAndroid = /Android/i.test(ua) && !/Chrome\/[89][0-9]|Chrome\/[1-9][0-9]{2}/i.test(ua)
     const isIOS = /iPhone|iPad|iPod/i.test(ua)
-    const isMobile = isLowEndAndroid || isIOS
+    const isAndroid = /Android/i.test(ua)
+    const isMobile = isIOS || isAndroid
 
-    if (isMobile) return
-
+    // Only skip truly software-rendered GPUs — allow mobile through
     const checkGPUCapability = () => {
       try {
         const testCanvas = document.createElement('canvas')
@@ -29,8 +28,9 @@ export default function ThreeBackground() {
           const rendererStr = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
           if (/SwiftShader|llvmpipe|software/i.test(rendererStr)) return false
         }
+        // Keep texture check but lower bar for mobile GPUs
         const maxTexture = gl.getParameter(gl.MAX_TEXTURE_SIZE)
-        if (maxTexture < 2048) return false
+        if (maxTexture < 1024) return false
         return true
       } catch {
         return false
@@ -52,11 +52,13 @@ export default function ThreeBackground() {
       renderer = new THREE.WebGLRenderer({
         canvas,
         alpha: true,
-        antialias: true,
-        powerPreference: 'high-performance',
+        // Lower cost on mobile: skip antialias
+        antialias: !isMobile,
+        powerPreference: isMobile ? 'low-power' : 'high-performance',
       })
 
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+      // Cap pixel ratio lower on mobile to reduce fill-rate cost
+      renderer.setPixelRatio(isMobile ? Math.min(window.devicePixelRatio, 1.5) : Math.min(window.devicePixelRatio, 2))
       renderer.setClearColor(0x000000, 0)
       renderer.shadowMap.enabled = false
       renderer.outputColorSpace = THREE.SRGBColorSpace
@@ -163,6 +165,9 @@ export default function ThreeBackground() {
           camera.updateProjectionMatrix()
 
           let startTime = null
+          // Slow down rotation slightly on mobile to ease GPU load
+          const rotSpeed = isMobile ? 0.03 : 0.05
+          const rotSpeedX = isMobile ? 0.012 : 0.02
 
           const tick = (now) => {
             raf = requestAnimationFrame(tick)
@@ -181,8 +186,8 @@ export default function ThreeBackground() {
             const finalScale = Math.max(growScale * currentScale, 0.15)
             pivot.scale.setScalar(finalScale)
 
-            pivot.rotation.y += safeDelta * 0.05
-            pivot.rotation.x += safeDelta * 0.02
+            pivot.rotation.y += safeDelta * rotSpeed
+            pivot.rotation.x += safeDelta * rotSpeedX
 
             renderer.render(scene, camera)
           }
