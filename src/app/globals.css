@@ -1,21 +1,31 @@
 :root {
-  --background: transparent;
+  --background: #000005;
   --foreground: transparent;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: transparent;
+    --background: #000005;
     --foreground: transparent;
   }
 }
 
-body {
-  background: transparent;
+html {
+  background-color: #000005;
+  min-height: 100%;
+  overscroll-behavior: none;
 }
 
-html, body, #__next {
-  background-color: transparent;
+body {
+  background-color: #000005;
+  min-height: 100vh;
+  min-height: 100dvh;
   margin: 0;
   padding: 0;
+  overscroll-behavior: none;
+}
+
+#__next {
+  background-color: #000005;
+  min-height: 100dvh;
 }
