@@ -9,7 +9,7 @@
 
 /* in your landing.css */
 html, body {
-  background-color: #1a0f3a; /* matches your radial-gradient's darkest color */
+  background-color: transparent; /* matches your radial-gradient's darkest color */
   margin: 0;
   padding: 0;
   overflow-x: hidden;
