@@ -29,3 +29,25 @@ body {
   background-color: #000005;
   min-height: 100dvh;
 }
+
+html {
+  background-color: #000005;
+  min-height: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  background-color: #000005;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overscroll-behavior: none;
+  /* Fill the safe area at the bottom */
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+#__next {
+  background-color: #000005;
+  min-height: 100dvh;
+}
