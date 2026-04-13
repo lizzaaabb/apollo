@@ -1,11 +1,13 @@
 'use client'
-import Crystal1 from './crystal1'
-import Crystal2 from './crystal2'
-import Crystal3 from './crystal3'
-import Crystal4 from './crystal4'
+import Crystal from '../components/crystals'
 import '../styles/pricing.css'
 
-const CRYSTALS = [Crystal1, Crystal2, Crystal3, Crystal4]
+const CRYSTALS = [
+  { src: '/crystal1.glb' },
+  { src: '/crystal2.glb' },
+  { src: '/crystal6.glb', exposure: '1.4', environment: 'legacy' },
+  { src: '/crystal4.glb' },
+]
 
 const ITEMS = [
   { title: 'Landing Page',     price: '₾700',   description: 'Single page, fast and modern. Perfect for showcasing a product or service.' },
@@ -16,8 +18,7 @@ const ITEMS = [
 
 const WHATSAPP = '574065469'
 
-function PricingCard({ item, index }) {
-  const Crystal = CRYSTALS[index]
+function PricingCard({ item, crystal }) {
   return (
     <div className='pricing-card'>
       <div className='pricing-card-header'>
@@ -28,7 +29,11 @@ function PricingCard({ item, index }) {
         </div>
       </div>
       <div className='pricing-card-shape'>
-        <Crystal />
+        <Crystal
+          src={crystal.src}
+          exposure={crystal.exposure}
+          environment={crystal.environment}
+        />
       </div>
       <div className='pricing-card-body'>
         <p className='pricing-card-desc'>{item.description}</p>
@@ -57,7 +62,7 @@ export default function Pricing() {
       </div>
       <div className='pricing-grid'>
         {ITEMS.map((item, index) => (
-          <PricingCard key={item.title} item={item} index={index} />
+          <PricingCard key={item.title} item={item} crystal={CRYSTALS[index]} />
         ))}
       </div>
     </div>

@@ -1,0 +1,89 @@
+.ball2-wrapper {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ball2-orb {
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  position: relative;
+  animation: orbGrow 1.5s cubic-bezier(0.23, 1, 0.32, 1) forwards,
+             orbFloat 6s ease-in-out infinite 1.5s,
+             orbRotate 12s linear infinite;
+  background: radial-gradient(
+    circle at 35% 35%,
+    #CCCCFF 0%,
+    #C3B1E1 20%,
+    #6A5ACD 50%,
+    #3a2d8a 75%,
+    #0d0820 100%
+  );
+  box-shadow:
+    0 0 60px 20px rgba(106, 90, 205, 0.4),
+    0 0 120px 40px rgba(195, 177, 225, 0.2),
+    0 0 200px 60px rgba(106, 90, 205, 0.1),
+    inset 0 0 60px rgba(204, 204, 255, 0.15);
+  transform: scale(0);
+}
+
+.ball2-shine {
+  position: absolute;
+  top: 12%;
+  left: 18%;
+  width: 35%;
+  height: 25%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(204, 204, 255, 0.2) 60%,
+    transparent 100%
+  );
+  filter: blur(8px);
+}
+
+.ball2-inner {
+  position: absolute;
+  inset: 15%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 60% 60%,
+    transparent 40%,
+    rgba(115, 194, 251, 0.15) 70%,
+    rgba(106, 90, 205, 0.3) 100%
+  );
+  animation: innerPulse 4s ease-in-out infinite;
+}
+
+@keyframes orbGrow {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+@keyframes orbFloat {
+  0%, 100% { transform: scale(1) translateY(0px); }
+  50%       { transform: scale(1) translateY(-18px); }
+}
+
+@keyframes orbRotate {
+  from { filter: hue-rotate(0deg) saturate(1.3) brightness(1.05); }
+  to   { filter: hue-rotate(30deg) saturate(1.3) brightness(1.05); }
+}
+
+@keyframes innerPulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.05); }
+}
+
+@media (max-width: 768px) {
+  .ball2-orb {
+    width: 280px;
+    height: 280px;
+  }
+}

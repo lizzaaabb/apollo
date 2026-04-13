@@ -1,6 +1,5 @@
 'use client'
-import React, { useEffect, useRef } from 'react'
-import Apollo from '../components/apollo'
+import React, { useEffect, useRef, useState } from 'react'
 import '../styles/cta.css'
 
 const PHONE_HREF = 'tel:+995574065469'
@@ -44,25 +43,37 @@ const IcMail = () => (
 
 export default function CTA() {
   const sectionRef = useRef(null)
+  const [apolloVisible, setApolloVisible] = useState(false)
+  const [Apollo, setApollo] = useState(null)
 
   useEffect(() => {
     const el = sectionRef.current
     if (!el) return
+
     const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) el.classList.add('visible') },
-      { threshold: 0.12 }
+      ([e]) => {
+        if (e.isIntersecting) {
+          el.classList.add('visible')
+          setApolloVisible(true)
+          obs.disconnect()
+        }
+      },
+      { threshold: 0.08 }
     )
     obs.observe(el)
     return () => obs.disconnect()
   }, [])
 
+  useEffect(() => {
+    if (apolloVisible) {
+      import('../components/apollo').then(m => setApollo(() => m.default))
+    }
+  }, [apolloVisible])
+
   return (
     <section className="ctaf" ref={sectionRef}>
-
       <div className="glow" aria-hidden />
-
       <div className="grid">
-
         <div className="left anim-left">
           <span className="eyebrow"><span className="dot" />Start a project</span>
           <h2 className="headline">
@@ -81,7 +92,7 @@ export default function CTA() {
         </div>
 
         <div className="model-wrap">
-          <Apollo />
+          {Apollo && <Apollo />}
         </div>
 
         <div className="right anim-right">
@@ -115,14 +126,12 @@ export default function CTA() {
 
           <p className="trust">Trusted by businesses across Georgia &amp; Europe</p>
         </div>
-
       </div>
 
       <footer className="bar anim-bar">
         <span className="f-brand">Apollo Creations</span>
         <span className="f-copy">© {new Date().getFullYear()} All rights reserved.</span>
       </footer>
-
     </section>
   )
 }

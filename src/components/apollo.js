@@ -1,19 +1,15 @@
 'use client'
 import { useEffect } from 'react'
+import { loadModelViewer } from './modelViewerLoader'
 
 export default function Apollo() {
   useEffect(() => {
-    if (!customElements.get('model-viewer')) {
-      const script = document.createElement('script')
-      script.type = 'module'
-      script.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js'
-      document.head.appendChild(script)
-    }
+    loadModelViewer()
   }, [])
 
   return (
     <model-viewer
-      src="./afrodite.glb"
+      src="/afrodite.glb"
       alt="Afrodite"
       auto-rotate
       rotation-per-second="23deg"
@@ -25,6 +21,7 @@ export default function Apollo() {
       tone-mapping="aces"
       exposure="1.2"
       shadow-intensity="0"
+      environment-image="neutral"
       style={{
         width: '100%',
         height: '100%',

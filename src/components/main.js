@@ -4,40 +4,29 @@ import '../styles/main.css'
 
 function Main() {
   const canvasRef = useRef(null)
-  const animRef = useRef(null)
-  const ripplesRef = useRef([])
   const heroRef = useRef(null)
+  const ripplesRef = useRef([])
+  const rafRef = useRef(null)
 
-  // Scroll fade effect
+  // Scroll fade
   useEffect(() => {
     const hero = heroRef.current
     if (!hero) return
-
     const isMobile = window.innerWidth <= 768
 
-    const handleScroll = () => {
-      const scrollY = window.scrollY
-      const fadeStart = 80
-      const fadeEnd = 420
-      const progress = Math.min(Math.max((scrollY - fadeStart) / (fadeEnd - fadeStart), 0), 1)
-
-      const eased = progress < 0.5
-        ? 2 * progress * progress
-        : 1 - Math.pow(-2 * progress + 2, 2) / 2
-
-      hero.style.opacity = 1 - eased
-      hero.style.transform = `translateY(${eased * -40}px) scale(${1 - eased * 0.04})`
-
-      if (!isMobile) {
-        hero.style.filter = `blur(${eased * 8}px)`
-      }
+    const onScroll = () => {
+      const p = Math.min(Math.max((window.scrollY - 80) / 340, 0), 1)
+      const e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2
+      hero.style.opacity = 1 - e
+      hero.style.transform = `translateY(${e * -40}px) scale(${1 - e * 0.04})`
+      if (!isMobile) hero.style.filter = `blur(${e * 8}px)`
     }
 
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Ripple effect
+  // Ripple canvas
   useEffect(() => {
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
@@ -48,83 +37,76 @@ function Main() {
       H = canvas.height = window.innerHeight
     }
     resize()
-    window.addEventListener('resize', resize)
+    window.addEventListener('resize', resize, { passive: true })
 
-    const spawnRipple = (x, y) => {
-      ripplesRef.current.push({
-        x,
-        y,
-        radius: 0,
-        maxRadius: 60 + Math.random() * 40,
-        life: 1.0,
-        speed: 1.2 + Math.random() * 1.0,
-        hue: 270 + Math.random() * 60,
-      })
-    }
-
-    let lastX = 0, lastY = 0
     const isMobile = window.innerWidth <= 768
+    let lastX = 0, lastY = 0
 
-    const handleMouseMove = (e) => {
+    const onMouseMove = (e) => {
       if (isMobile) return
       const dx = e.clientX - lastX
       const dy = e.clientY - lastY
-      const dist = Math.sqrt(dx * dx + dy * dy)
-      if (dist > 12) {
-        spawnRipple(e.clientX, e.clientY)
+      if (dx * dx + dy * dy > 144) {
+        ripplesRef.current.push({
+          x: e.clientX, y: e.clientY,
+          radius: 0,
+          maxRadius: 60 + Math.random() * 40,
+          life: 1,
+          speed: 1.2 + Math.random(),
+          hue: 270 + Math.random() * 60,
+        })
         lastX = e.clientX
         lastY = e.clientY
       }
     }
-    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mousemove', onMouseMove, { passive: true })
 
     const draw = () => {
       ctx.clearRect(0, 0, W, H)
-      ripplesRef.current.forEach((r) => {
+      ripplesRef.current = ripplesRef.current.filter(r => {
         r.radius += r.speed
         r.life = 1 - r.radius / r.maxRadius
-        if (r.life <= 0) return
+        if (r.life <= 0) return false
 
-        const alpha = r.life * 0.4
-        const lineWidth = r.life * 1.8
+        const a = r.life * 0.4
+        const lw = r.life * 1.8
 
         ctx.beginPath()
         ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2)
-        ctx.strokeStyle = `hsla(${r.hue}, 80%, 80%, ${alpha})`
-        ctx.lineWidth = lineWidth
+        ctx.strokeStyle = `hsla(${r.hue},80%,80%,${a})`
+        ctx.lineWidth = lw
         ctx.stroke()
 
         if (r.radius > 8) {
           ctx.beginPath()
           ctx.arc(r.x, r.y, r.radius * 0.6, 0, Math.PI * 2)
-          ctx.strokeStyle = `hsla(${r.hue + 20}, 70%, 85%, ${alpha * 0.5})`
-          ctx.lineWidth = lineWidth * 0.5
+          ctx.strokeStyle = `hsla(${r.hue + 20},70%,85%,${a * 0.5})`
+          ctx.lineWidth = lw * 0.5
           ctx.stroke()
         }
 
         if (r.radius < 12) {
           ctx.beginPath()
           ctx.arc(r.x, r.y, 2.5, 0, Math.PI * 2)
-          ctx.fillStyle = `hsla(${r.hue}, 90%, 90%, ${r.life * 0.8})`
+          ctx.fillStyle = `hsla(${r.hue},90%,90%,${r.life * 0.8})`
           ctx.fill()
         }
+        return true
       })
-      ripplesRef.current = ripplesRef.current.filter(r => r.life > 0)
-      animRef.current = requestAnimationFrame(draw)
+      rafRef.current = requestAnimationFrame(draw)
     }
     draw()
 
     return () => {
       window.removeEventListener('resize', resize)
-      window.removeEventListener('mousemove', handleMouseMove)
-      cancelAnimationFrame(animRef.current)
+      window.removeEventListener('mousemove', onMouseMove)
+      cancelAnimationFrame(rafRef.current)
     }
   }, [])
 
   return (
     <>
       <canvas ref={canvasRef} className="ripple-canvas" />
-
       <div
         ref={heroRef}
         style={{
@@ -133,8 +115,6 @@ function Main() {
           height: '100vh',
           zIndex: 2,
           willChange: 'opacity, transform',
-          transform: 'translateZ(0)',
-          transition: 'none',
         }}
       >
         <div className='main-container'>
@@ -153,17 +133,13 @@ function Main() {
             </div>
             <div className="right-btn-container">
               <button className='right-btn-1'>
-                Get Started <span className='sp-ar'></span>
+                Get Started <span className='sp-ar' />
               </button>
               <button className='right-btn-2'>Discover More</button>
             </div>
           </div>
         </div>
       </div>
-
-      <section id="next-section">
-        {/* your next section content here */}
-      </section>
     </>
   )
 }
